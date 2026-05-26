@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sayanly — Product Documentation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #fff;
+      color: #1a1a2e;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    /* ── Cover Page ── */
+    .cover {
+      height: 100vh;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a0533 50%, #0f0f1a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px;
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 70%);
+      top: -100px; left: 50%;
+      transform: translateX(-50%);
+      border-radius: 50%;
+    }
+
+    .cover-logo {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; font-weight: 900; color: white;
+      margin-bottom: 32px;
+      position: relative;
+      box-shadow: 0 0 60px rgba(124,58,237,0.5);
+    }
+
+    .cover h1 {
+      font-size: 64px;
+      font-weight: 900;
+      color: white;
+      letter-spacing: -2px;
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    .cover h1 span { color: #a78bfa; }
+
+    .cover-tagline {
+      font-size: 18px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 48px;
+      position: relative;
+    }
+
+    .cover-meta {
+      display: flex; gap: 32px;
+      position: relative;
+    }
+
+    .cover-meta-item {
+      text-align: center;
+    }
+
+    .cover-meta-item .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.3);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .cover-meta-item .value {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .cover-divider {
+      width: 60px; height: 2px;
+      background: linear-gradient(90deg, transparent, #7c3aed, transparent);
+      margin: 32px auto;
+      position: relative;
+    }
+
+    /* ── Page Layout ── */
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 60px 60px;
+    }
+
+    @media print {
+      .page { padding: 40px 50px; }
+      .cover { height: 100vh; }
+      .section { page-break-inside: avoid; }
+    }
+
+    /* ── TOC ── */
+    .toc-page {
+      padding: 60px;
+      max-width: 780px;
+      margin: 0 auto;
+      page-break-after: always;
+    }
+
+    .toc-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #7c3aed;
+      margin-bottom: 32px;
+    }
+
+    .toc-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+      gap: 8px;
+    }
+
+    .toc-item:last-child { border-bottom: none; }
+
+    .toc-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: #7c3aed;
+      width: 28px;
+      shrink: 0;
+    }
+
+    .toc-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a2e;
+      flex: 1;
+    }
+
+    .toc-dots {
+      flex: 1;
+      border-bottom: 2px dotted #e0e0e0;
+      margin: 0 12px 4px;
+    }
+
+    .toc-page-num {
+      font-size: 12px;
+      font-weight: 600;
+      color: #999;
+    }
+
+    /* ── Section Headers ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .section-num {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 900; color: white;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+    }
+
+    /* ── Typography ── */
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 28px 0 12px;
+    }
+
+    h4 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #7c3aed;
+      margin: 20px 0 8px;
+    }
+
+    p { margin-bottom: 14px; color: #444; }
+
+    .section { margin-bottom: 48px; }
+
+    /* ── Cards ── */
+    .card {
+      background: #f8f7ff;
+      border: 1px solid #e8e0ff;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title .icon {
+      width: 22px; height: 22px;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: white;
+      font-weight: 900;
+    }
+
+    .card p { margin-bottom: 0; font-size: 13px; }
+
+    /* ── Feature Grid ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .feature-card {
+      background: #f8f7ff;
+      border: 1px solid #e8e0ff;
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+
+    .feature-card h4 { margin-top: 0; }
+    .feature-card p { font-size: 12px; margin-bottom: 0; }
+
+    /* ── Table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 13px;
+    }
+
+    thead tr {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    }
+
+    thead th {
+      padding: 10px 16px;
+      text-align: left;
+      font-weight: 700;
+      color: white;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    thead th:first-child { border-radius: 8px 0 0 0; }
+    thead th:last-child { border-radius: 0 8px 0 0; }
+
+    tbody tr { border-bottom: 1px solid #f0f0f0; }
+    tbody tr:nth-child(even) { background: #faf9ff; }
+
+    tbody td {
+      padding: 10px 16px;
+      color: #444;
+    }
+
+    tbody td:first-child { font-weight: 600; color: #1a1a2e; }
+
+    /* ── Code Block ── */
+    .code-block {
+      background: #1a1a2e;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin: 16px 0;
+      overflow-x: auto;
+    }
+
+    .code-block pre {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      color: #a78bfa;
+      line-height: 1.6;
+    }
+
+    .code-block .comment { color: #666; }
+    .code-block .string { color: #86efac; }
+    .code-block .keyword { color: #f9a8d4; }
+
+    /* ── Flow Diagram ── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 20px 0;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .flow-line {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .flow-dot {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 900; color: white;
+      flex-shrink: 0;
+    }
+
+    .flow-connector {
+      width: 2px;
+      height: 32px;
+      background: linear-gradient(180deg, #7c3aed, transparent);
+      margin: 0 auto;
+    }
+
+    .flow-content {
+      padding: 4px 0 32px;
+      flex: 1;
+    }
+
+    .flow-content h5 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    .flow-content p {
+      font-size: 12px;
+      color: #888;
+      margin: 0;
+    }
+
+    /* ── Phase Roadmap ── */
+    .phase {
+      border-left: 3px solid #7c3aed;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      background: #f8f7ff;
+      border-radius: 0 10px 10px 0;
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .phase-badge {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .phase-badge.current { background: #7c3aed; color: white; }
+    .phase-badge.next { background: #e8e0ff; color: #7c3aed; }
+    .phase-badge.future { background: #f0f0f0; color: #999; }
+
+    .phase-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .phase ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .phase ul li {
+      font-size: 12px;
+      color: #555;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .phase ul li::before {
+      content: '✓';
+      color: #7c3aed;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    /* ── Platform Pills ── */
+    .platform-pills {
+      display: flex;
+      gap: 10px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .pill.linkedin { background: #e8f0fe; color: #0077B5; }
+    .pill.facebook { background: #e8f0fe; color: #1877F2; }
+    .pill.instagram { background: #fce8f0; color: #E1306C; }
+
+    /* ── API Section ── */
+    .api-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px 20px;
+      background: #f8f7ff;
+      border: 1px solid #e8e0ff;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .api-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .api-card h5 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 2px;
+    }
+
+    .api-card p { font-size: 12px; color: #666; margin: 0; }
+
+    .api-free { background: #d1fae5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 4px; }
+    .api-paid { background: #fef3c7; color: #d97706; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 4px; }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 60px;
+      padding: 30px 0;
+      border-top: 2px solid #f0f0f0;
+      text-align: center;
+    }
+
+    .footer p { font-size: 12px; color: #bbb; margin: 0; }
+
+    /* ── Highlight Box ── */
+    .highlight {
+      background: linear-gradient(135deg, #f8f7ff, #ede9ff);
+      border: 1px solid #c4b5fd;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 20px 0;
+    }
+
+    .highlight strong { color: #7c3aed; }
+
+    /* ── Print ── */
+    @media print {
+      body { font-size: 13px; }
+      .cover { page-break-after: always; }
+      .toc-page { page-break-after: always; }
+      .page-break { page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--                  COVER PAGE                    -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">S</div>
+  <h1>SAYAN<span>LY</span></h1>
+  <p class="cover-tagline">AI-Powered Social Media Content Factory</p>
+  <div class="cover-divider"></div>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <span class="label">Version</span>
+      <span class="value">1.0 — Phase 1</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="label">Document Type</span>
+      <span class="value">Product Documentation</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="label">Date</span>
+      <span class="value">May 2026</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="label">Status</span>
+      <span class="value">Built & Ready</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--               TABLE OF CONTENTS               -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="toc-page">
+  <p class="toc-title">Table of Contents</p>
+
+  <div class="toc-item">
+    <span class="toc-num">01</span>
+    <span class="toc-name">Product Overview</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">3</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">02</span>
+    <span class="toc-name">Core Features</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">4</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">03</span>
+    <span class="toc-name">User Flow</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">5</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">04</span>
+    <span class="toc-name">Topic Research Engine</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">6</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">05</span>
+    <span class="toc-name">Post Generator</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">7</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">06</span>
+    <span class="toc-name">Graphic Generator</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">8</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">07</span>
+    <span class="toc-name">Tech Stack & APIs</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">9</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">08</span>
+    <span class="toc-name">Project Structure</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">10</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">09</span>
+    <span class="toc-name">Data Model</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">11</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">10</span>
+    <span class="toc-name">Roadmap</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page-num">12</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--              1. PRODUCT OVERVIEW              -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page">
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <h2 class="section-title">Product Overview</h2>
+    </div>
+
+    <div class="highlight">
+      <strong>Sayanly</strong> is an AI-powered weekly social media content factory. A business enters their company profile once — and Sayanly researches trending topics, writes platform-optimized posts, and generates ready-to-post graphics for a full week in minutes.
+    </div>
+
+    <h3>The Problem</h3>
+    <p>Businesses and agencies spend 5–10 hours per week creating social media content. Writing posts, researching what topics are trending, designing graphics, adapting content for each platform — it's repetitive, time-consuming, and often inconsistent in quality.</p>
+
+    <h3>The Solution</h3>
+    <p>Sayanly automates the entire weekly content workflow using AI. One profile setup → one click → a full week of posts and graphics, ready to schedule.</p>
+
+    <h3>Target Users</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h4>Small Business Owners</h4>
+        <p>Managing their own social media without a team or agency budget.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Marketing Managers</h4>
+        <p>At SMEs who need consistent content across platforms every week.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Social Media Agencies</h4>
+        <p>Managing multiple client accounts — Sayanly scales content production.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Consultants & Personal Brands</h4>
+        <p>Solo professionals who need to maintain a consistent online presence.</p>
+      </div>
+    </div>
+
+    <h3>Platforms Supported</h3>
+    <div class="platform-pills">
+      <span class="pill linkedin">LinkedIn</span>
+      <span class="pill facebook">Facebook</span>
+      <span class="pill instagram">Instagram</span>
+    </div>
+    <p>Each platform gets its own version of every post — tone, length, hashtag style, and formatting are all adapted automatically.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--               2. CORE FEATURES               -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <h2 class="section-title">Core Features</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">1</span> Company Profile</div>
+      <p>Set up once. Used for all future weeks. Stores company name, niche, target audience, tone of voice, brand colors, platforms, past posts, and competitor posts.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">2</span> Topic Research Engine</div>
+      <p>4-method hybrid: Claude's industry knowledge + competitor gap analysis + Tavily real-time web search + user's own post history. Suggests 7 topics per week with reasoning.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">3</span> Weekly Post Generator</div>
+      <p>For each approved topic → generates 3 platform-specific versions (LinkedIn, Facebook, Instagram). Each includes hook, body, CTA, 15 hashtags, and a first comment.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">4</span> Graphic Generator</div>
+      <p>Claude writes a detailed image prompt matched to the post and brand colors. Pollinations AI generates the actual graphic (free, no API key needed). User downloads ready-to-post images.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">5</span> Poster Cloner <span style="font-size:11px;color:#999;font-weight:400;margin-left:8px;">(Phase 2)</span></div>
+      <p>User uploads any graphic they like. Claude Vision analyzes layout, style, composition, and colors. Recreates the same design with user's brand colors and company details.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">6</span> Week History & Export</div>
+      <p>Every generated week is saved. User can revisit past weeks, export all posts as PDF, or bulk-copy posts per platform.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--                3. USER FLOW                   -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <h2 class="section-title">User Flow</h2>
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">1</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h5>Setup Company Profile</h5>
+          <p>One-time setup. Company name, niche, audience, tone, brand colors, platforms selected.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">2</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h5>Start New Week → Research Topics</h5>
+          <p>System searches web (Tavily) + analyzes competitors + uses Claude knowledge → suggests 7 topics with reasoning.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">3</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h5>Approve / Edit Topics</h5>
+          <p>User reviews, approves, edits, or swaps topics. Can type their own custom topics.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">4</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h5>Generate Posts (21 total)</h5>
+          <p>7 topics × 3 platforms = 21 posts. All generated in one Claude call.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">5</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h5>Review & Edit Posts</h5>
+          <p>View posts by platform. Edit inline. Copy individual posts.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">6</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h5>Generate Graphics</h5>
+          <p>One click generates graphics for all 7 topics using Pollinations AI. Download individual images.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">7</div>
+          <div class="flow-connector" style="background:transparent;"></div>
+        </div>
+        <div class="flow-content">
+          <h5>Export & Schedule</h5>
+          <p>PDF export, bulk copy per platform, or download all graphics. Week saved to history automatically.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--           4. TOPIC RESEARCH ENGINE            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <h2 class="section-title">Topic Research Engine</h2>
+    </div>
+
+    <p>The topic engine combines 4 independent research methods and merges them into 7 final topic suggestions with reasoning.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h4>Method 1 — Claude Knowledge</h4>
+        <p>Claude's training data covers industry trends, pain points, and content formats for virtually any niche. Always active as the base layer.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Method 2 — Competitor Analysis</h4>
+        <p>User pastes competitor posts in their profile. Claude identifies what topics they cover, finds gaps, and suggests angles competitors have missed.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Method 3 — Web Search (Tavily)</h4>
+        <p>Real-time search for trending topics in the company's niche this week. Pulls current conversations, news, and pain points from LinkedIn and Google.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Method 4 — Past Post Analysis</h4>
+        <p>User pastes their own previous posts. Claude avoids repetition, builds on what worked, and ensures content variety week to week.</p>
+      </div>
+    </div>
+
+    <h3>Topic Output Format</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Description</th>
+          <th>Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Title</td>
+          <td>Topic headline</td>
+          <td>"Why most startups fail at hiring"</td>
+        </tr>
+        <tr>
+          <td>Reasoning</td>
+          <td>Why this will perform this week</td>
+          <td>"Trending after recent layoff news"</td>
+        </tr>
+        <tr>
+          <td>Best Platform</td>
+          <td>Which platform suits this topic</td>
+          <td>LinkedIn</td>
+        </tr>
+        <tr>
+          <td>Format</td>
+          <td>Post format suggestion</td>
+          <td>List / Opinion / Story / Stat / Question</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--              5. POST GENERATOR                -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <h2 class="section-title">Post Generator</h2>
+    </div>
+
+    <p>For each approved topic, the system generates 3 platform-specific post versions in a single Claude API call.</p>
+
+    <h3>Platform Differences</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Platform</th>
+          <th>Tone</th>
+          <th>Length</th>
+          <th>Style</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>LinkedIn</td>
+          <td>Professional, insight-driven</td>
+          <td>Longer form</td>
+          <td>Ends with thought-provoking question</td>
+        </tr>
+        <tr>
+          <td>Facebook</td>
+          <td>Conversational, community</td>
+          <td>Medium</td>
+          <td>Story-driven, relatable</td>
+        </tr>
+        <tr>
+          <td>Instagram</td>
+          <td>Punchy, visual-first</td>
+          <td>Short caption</td>
+          <td>Emoji-friendly, strong CTA</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Post Structure (per platform)</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h4>Hook</h4>
+        <p>First line — designed to stop scrolling. Question, stat, or bold statement.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Body</h4>
+        <p>2–4 sentences or bullet points. The value delivery.</p>
+      </div>
+      <div class="feature-card">
+        <h4>CTA</h4>
+        <p>Clear call to action. Comment, share, follow, or visit.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Hashtags + First Comment</h4>
+        <p>15 platform hashtags + 10 niche hashtags in first comment for reach boost.</p>
+      </div>
+    </div>
+
+    <div class="highlight">
+      <strong>Output per week:</strong> 7 topics × 3 platforms = <strong>21 ready-to-post pieces of content</strong>, all generated in under 30 seconds.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--             6. GRAPHIC GENERATOR              -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <h2 class="section-title">Graphic Generator</h2>
+    </div>
+
+    <p>For each post, Sayanly generates an actual graphic image — not just a prompt. The process is fully automated.</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">1</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h5>Claude writes image prompt</h5>
+          <p>Based on topic, post hook, brand colors, and platform dimensions. Detailed, specific, design-brief-quality.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">2</div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h5>Pollinations AI generates image</h5>
+          <p>Free image generation API. No credits, no account needed. Returns a real image from the prompt.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot">3</div>
+          <div class="flow-connector" style="background:transparent;"></div>
+        </div>
+        <div class="flow-content">
+          <h5>User downloads ready image</h5>
+          <p>1200×630px for LinkedIn/Facebook. Prompt also shown for manual tweaking in Midjourney or Ideogram.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Upgrade Path</h3>
+    <table>
+      <thead>
+        <tr><th>Provider</th><th>Quality</th><th>Cost</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Pollinations AI</td><td>Good</td><td>Free</td><td>Current (Phase 1)</td></tr>
+        <tr><td>Ideogram</td><td>Excellent (text in images)</td><td>Paid</td><td>Phase 3 upgrade</td></tr>
+        <tr><td>DALL-E 3</td><td>Very Good</td><td>~$0.04/image</td><td>Phase 3 option</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--             7. TECH STACK & APIs              -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <h2 class="section-title">Tech Stack & APIs</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Framework</td><td>Next.js 16.2, App Router, Turbopack</td><td>Full-stack web app</td></tr>
+        <tr><td>Language</td><td>TypeScript</td><td>Type-safe code</td></tr>
+        <tr><td>Styling</td><td>Tailwind CSS v4 + Geist font</td><td>Premium dark UI</td></tr>
+        <tr><td>AI — Posts</td><td>Anthropic claude-sonnet-4-6</td><td>Topic research + post writing</td></tr>
+        <tr><td>AI — Vision</td><td>Claude Vision (multimodal)</td><td>Poster cloner analysis (Phase 2)</td></tr>
+        <tr><td>Web Search</td><td>Tavily API</td><td>Real-time topic research</td></tr>
+        <tr><td>Image Gen</td><td>Pollinations AI</td><td>Free graphic generation</td></tr>
+        <tr><td>Storage</td><td>Local JSON (data/sayanly.json)</td><td>Phase 1 — no database needed</td></tr>
+        <tr><td>PDF Export</td><td>jsPDF</td><td>Export all posts as PDF</td></tr>
+      </tbody>
+    </table>
+
+    <h3>API Keys Required</h3>
+
+    <div class="api-card">
+      <div class="api-icon" style="background:#f3e8ff;">🤖</div>
+      <div>
+        <h5>Anthropic API</h5>
+        <p>Powers all AI — topic research, post writing, image prompt generation, poster cloning.</p>
+        <span class="api-paid">Pay per token</span>
+      </div>
+    </div>
+
+    <div class="api-card">
+      <div class="api-icon" style="background:#e8f5e9;">🔍</div>
+      <div>
+        <h5>Tavily API</h5>
+        <p>Real-time web search for trending topics in any niche. 1000 free searches/month.</p>
+        <span class="api-free">Free tier: 1000/month</span>
+      </div>
+    </div>
+
+    <div class="api-card">
+      <div class="api-icon" style="background:#e8f0fe;">🎨</div>
+      <div>
+        <h5>Pollinations AI</h5>
+        <p>Free image generation. No API key, no sign-up, no credits needed.</p>
+        <span class="api-free">Completely Free</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--             8. PROJECT STRUCTURE              -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-num">8</div>
+      <h2 class="section-title">Project Structure</h2>
+    </div>
+
+    <div class="code-block">
+      <pre>sayanly-app/
+├── app/
+│   ├── api/
+│   │   ├── profile/route.ts          <span class="comment"># GET + POST company profile</span>
+│   │   ├── topics/route.ts           <span class="comment"># Tavily search + Claude → 7 topics</span>
+│   │   ├── posts/route.ts            <span class="comment"># Claude → 7 topics × 3 platforms</span>
+│   │   ├── graphics/route.ts         <span class="comment"># Claude prompt → Pollinations image</span>
+│   │   ├── weeks/route.ts            <span class="comment"># GET all / POST save week</span>
+│   │   └── weeks/[id]/route.ts       <span class="comment"># GET + PATCH single week</span>
+│   ├── profile/page.tsx              <span class="comment"># Company profile setup form</span>
+│   ├── dashboard/page.tsx            <span class="comment"># All weeks grid + sidebar</span>
+│   ├── week/
+│   │   ├── new/page.tsx              <span class="comment"># 3-step: research → approve → generate</span>
+│   │   └── [id]/page.tsx             <span class="comment"># Posts + Graphics + Export tabs</span>
+│   ├── globals.css                   <span class="comment"># Design system</span>
+│   └── layout.tsx                    <span class="comment"># Geist font + noise body</span>
+├── lib/
+│   └── local-store.ts                <span class="comment"># JSON storage functions + types</span>
+├── data/
+│   └── sayanly.json                  <span class="comment"># All app data (auto-created)</span>
+├── PRD.md                            <span class="comment"># Full product spec</span>
+├── ONBOARDING.md                     <span class="comment"># Session starter for developers</span>
+├── start.bat                         <span class="comment"># Start server with API keys</span>
+└── next.config.ts                    <span class="comment"># Turbopack config</span></pre>
+    </div>
+
+    <h3>How to Start</h3>
+    <div class="code-block">
+      <pre><span class="comment"># Always use start.bat — never npm run dev directly</span>
+<span class="comment"># start.bat injects all API keys automatically</span>
+
+C:\Users\sagar\Downloads\sayanly-app\start.bat
+
+<span class="comment"># Then open:</span>
+http://localhost:3000</pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--                9. DATA MODEL                  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-num">9</div>
+      <h2 class="section-title">Data Model</h2>
+    </div>
+
+    <div class="code-block">
+      <pre><span class="keyword">type</span> CompanyProfile = {
+  id: <span class="string">string</span>
+  name: <span class="string">string</span>                  <span class="comment">// Company name</span>
+  description: <span class="string">string</span>          <span class="comment">// What the company does</span>
+  target_audience: <span class="string">string</span>      <span class="comment">// Who they sell to</span>
+  tone: <span class="string">'professional'</span> | <span class="string">'casual'</span> | <span class="string">'inspirational'</span> | <span class="string">'educational'</span> | <span class="string">'bold'</span>
+  brand_colors: { primary: <span class="string">string</span>; secondary: <span class="string">string</span> }
+  platforms: (<span class="string">'linkedin'</span> | <span class="string">'facebook'</span> | <span class="string">'instagram'</span>)[]
+  past_posts?: <span class="string">string</span>          <span class="comment">// Optional — improves topic research</span>
+  competitor_posts?: <span class="string">string</span>   <span class="comment">// Optional — finds content gaps</span>
+  created_at: <span class="string">string</span>
+}
+
+<span class="keyword">type</span> Topic = {
+  id: <span class="string">string</span>
+  title: <span class="string">string</span>
+  reasoning: <span class="string">string</span>            <span class="comment">// Why this will perform</span>
+  best_platform: <span class="string">string</span>
+  format: <span class="string">string</span>               <span class="comment">// List / Opinion / Story / Stat</span>
+  approved: <span class="string">boolean</span>
+}
+
+<span class="keyword">type</span> Post = {
+  topic_id: <span class="string">string</span>
+  linkedin:  PlatformPost
+  facebook:  PlatformPost
+  instagram: PlatformPost
+}
+
+<span class="keyword">type</span> PlatformPost = {
+  hook: <span class="string">string</span>
+  body: <span class="string">string</span>
+  cta: <span class="string">string</span>
+  hashtags: <span class="string">string</span>[]            <span class="comment">// 15 tags</span>
+  first_comment: <span class="string">string</span>        <span class="comment">// 10 niche tags</span>
+}
+
+<span class="keyword">type</span> Week = {
+  id: <span class="string">string</span>
+  profile_id: <span class="string">string</span>
+  week_label: <span class="string">string</span>           <span class="comment">// e.g. "Week of May 12, 2026"</span>
+  created_at: <span class="string">string</span>
+  topics: Topic[]
+  posts: Post[]
+  graphics: Graphic[]
+  status: <span class="string">'draft'</span> | <span class="string">'complete'</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--                10. ROADMAP                    -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <h2 class="section-title">Roadmap</h2>
+    </div>
+
+    <div class="phase">
+      <div class="phase-header">
+        <span class="phase-badge current">Current</span>
+        <span class="phase-title">Phase 1 — Local MVP</span>
+      </div>
+      <ul>
+        <li>Company profile setup</li>
+        <li>4-method topic research</li>
+        <li>7 posts × 3 platforms</li>
+        <li>Graphic generation (Pollinations)</li>
+        <li>Week history (local JSON)</li>
+        <li>PDF export</li>
+        <li>Dashboard with all weeks</li>
+        <li>Inline post editing</li>
+      </ul>
+    </div>
+
+    <div class="phase">
+      <div class="phase-header">
+        <span class="phase-badge next">Next</span>
+        <span class="phase-title">Phase 2 — Poster Cloner</span>
+      </div>
+      <ul>
+        <li>Image upload UI</li>
+        <li>Claude Vision analysis</li>
+        <li>Brand-matched recreation</li>
+        <li>Designer brief text output</li>
+        <li>Ideogram API upgrade</li>
+        <li>Regenerate individual posts</li>
+      </ul>
+    </div>
+
+    <div class="phase" style="border-color:#ccc;">
+      <div class="phase-header">
+        <span class="phase-badge future">Future</span>
+        <span class="phase-title">Phase 3 — Polish & Upgrade</span>
+      </div>
+      <ul>
+        <li>Regenerate individual graphics</li>
+        <li>Duplicate past week</li>
+        <li>Schedule posts directly</li>
+        <li>Better image generation (Ideogram)</li>
+      </ul>
+    </div>
+
+    <div class="phase" style="border-color:#ccc;">
+      <div class="phase-header">
+        <span class="phase-badge future">Future</span>
+        <span class="phase-title">Phase 4 — Cloud & Multi-user</span>
+      </div>
+      <ul>
+        <li>Supabase database</li>
+        <li>User authentication</li>
+        <li>Multiple company profiles</li>
+        <li>Team collaboration</li>
+        <li>Cloud deployment</li>
+        <li>Analytics dashboard</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Sayanly — AI Social Media Content Factory &nbsp;|&nbsp; Built May 2026 &nbsp;|&nbsp; Powered by Anthropic Claude + Tavily + Pollinations AI</p>
+  </div>
+
+</div>
+
+</body>
+</html>
