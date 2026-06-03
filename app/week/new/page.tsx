@@ -74,24 +74,37 @@ export default function NewWeekPage() {
     setGeneratingPosts(true)
     setError('')
     try {
-      const res = await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, topics }),
-      })
-      const data = await res.json() as { posts?: Post[]; error?: string }
-      if (!data.posts) {
-        setError(data.error ?? 'Failed to generate posts')
+      const approvedTopics = topics.filter(t => t.approved)
+      if (approvedTopics.length === 0) {
+        setError('Please approve at least one topic')
         setGeneratingPosts(false)
         return
+      }
+
+      // Generate posts in small batches of 2 to avoid Netlify 10s timeout
+      const allPosts: Post[] = []
+      const batchSize = 2
+      for (let i = 0; i < approvedTopics.length; i += batchSize) {
+        const batch = approvedTopics.slice(i, i + batchSize)
+        const res = await fetch('/api/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile, topics: batch.map(t => ({ ...t, approved: true })) }),
+        })
+        const data = await res.json() as { posts?: Post[]; error?: string }
+        if (!data.posts) {
+          setError(`Error generating posts: ${data.error ?? `HTTP ${res.status}`}`)
+          setGeneratingPosts(false)
+          return
+        }
+        allPosts.push(...data.posts)
       }
 
       // Get week count for label
       let weekNumber = 1
       try {
-        const weeksRes = await fetch('/api/weeks')
-        const weeksData = await weeksRes.json() as Week[]
-        weekNumber = (Array.isArray(weeksData) ? weeksData.length : 0) + 1
+        const existing = JSON.parse(localStorage.getItem('sayanly_weeks') ?? '[]') as Week[]
+        weekNumber = existing.length + 1
       } catch { weekNumber = 1 }
 
       const week: Week = {
@@ -100,19 +113,19 @@ export default function NewWeekPage() {
         week_label: getWeekLabel(weekNumber),
         created_at: new Date().toISOString(),
         topics,
-        posts: data.posts,
+        posts: allPosts,
         graphics: [],
         status: 'draft',
       }
 
-      // Save to localStorage (works on Netlify where filesystem is read-only)
+      // Save to localStorage
       try {
         const existing = JSON.parse(localStorage.getItem('sayanly_weeks') ?? '[]') as Week[]
         existing.unshift(week)
         localStorage.setItem('sayanly_weeks', JSON.stringify(existing))
       } catch { /* ignore */ }
 
-      // Also try server save (works locally, silent fail on Netlify)
+      // Also try server save (silent fail on Netlify)
       try {
         await fetch('/api/weeks', {
           method: 'POST',
