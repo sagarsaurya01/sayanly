@@ -34,8 +34,23 @@ export default function DashboardPage() {
     fetch('/api/weeks')
       .then(r => r.json())
       .then((data: Week[] | { weeks: Week[] }) => {
-        const arr = Array.isArray(data) ? data : (data.weeks ?? [])
-        setWeeks(arr)
+        const serverWeeks = Array.isArray(data) ? data : (data.weeks ?? [])
+        // Merge with localStorage weeks (Netlify can't write server-side)
+        try {
+          const localWeeks = JSON.parse(localStorage.getItem('sayanly_weeks') ?? '[]') as Week[]
+          const serverIds = new Set(serverWeeks.map((w: Week) => w.id))
+          const onlyLocal = localWeeks.filter(w => !serverIds.has(w.id))
+          setWeeks([...onlyLocal, ...serverWeeks])
+        } catch {
+          setWeeks(serverWeeks)
+        }
+      })
+      .catch(() => {
+        // All server failed — use localStorage only
+        try {
+          const localWeeks = JSON.parse(localStorage.getItem('sayanly_weeks') ?? '[]') as Week[]
+          setWeeks(localWeeks)
+        } catch { setWeeks([]) }
       })
       .finally(() => setLoading(false))
   }

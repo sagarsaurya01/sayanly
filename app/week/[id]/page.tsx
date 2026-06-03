@@ -530,9 +530,30 @@ export default function WeekPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('posts')
 
   const loadWeek = useCallback(async () => {
-    const res = await fetch(`/api/weeks/${params.id}`)
-    const data = await res.json() as { week?: Week }
-    if (data.week) setWeek(data.week)
+    // Try server first
+    try {
+      const res = await fetch(`/api/weeks/${params.id}`)
+      if (res.ok) {
+        const data = await res.json() as { week?: Week }
+        if (data.week) {
+          setWeek(data.week)
+          setLoading(false)
+          return
+        }
+      }
+    } catch { /* fall through */ }
+
+    // Fallback: read from localStorage (works on Netlify where filesystem is read-only)
+    try {
+      const stored = JSON.parse(localStorage.getItem('sayanly_weeks') ?? '[]') as Week[]
+      const found = stored.find(w => w.id === params.id)
+      if (found) {
+        setWeek(found)
+        setLoading(false)
+        return
+      }
+    } catch { /* ignore */ }
+
     setLoading(false)
   }, [params.id])
 

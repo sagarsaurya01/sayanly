@@ -86,10 +86,13 @@ export default function NewWeekPage() {
         return
       }
 
-      // Get total week count to number this week correctly
-      const weeksRes = await fetch('/api/weeks')
-      const weeksData = await weeksRes.json() as Week[]
-      const weekNumber = (Array.isArray(weeksData) ? weeksData.length : 0) + 1
+      // Get week count for label
+      let weekNumber = 1
+      try {
+        const weeksRes = await fetch('/api/weeks')
+        const weeksData = await weeksRes.json() as Week[]
+        weekNumber = (Array.isArray(weeksData) ? weeksData.length : 0) + 1
+      } catch { weekNumber = 1 }
 
       const week: Week = {
         id: generateId(),
@@ -102,15 +105,26 @@ export default function NewWeekPage() {
         status: 'draft',
       }
 
-      await fetch('/api/weeks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(week),
-      })
+      // Save to localStorage (works on Netlify where filesystem is read-only)
+      try {
+        const existing = JSON.parse(localStorage.getItem('sayanly_weeks') ?? '[]') as Week[]
+        existing.unshift(week)
+        localStorage.setItem('sayanly_weeks', JSON.stringify(existing))
+      } catch { /* ignore */ }
+
+      // Also try server save (works locally, silent fail on Netlify)
+      try {
+        await fetch('/api/weeks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(week),
+        })
+      } catch { /* ignore */ }
 
       router.push(`/week/${week.id}`)
-    } catch {
-      setError('Network error. Please try again.')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to generate posts'
+      setError(msg)
       setGeneratingPosts(false)
     }
   }
