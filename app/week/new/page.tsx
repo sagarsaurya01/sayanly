@@ -331,7 +331,7 @@ export default function NewWeekPage() {
                 <button
                   onClick={handleResearchTopics}
                   disabled={generating}
-                  className="btn-primary w-full py-3 text-base"
+                  className="btn-primary w-full py-3.5 text-base flex items-center justify-center gap-2 rounded-2xl"
                 >
                   {generating ? (
                     <>

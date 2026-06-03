@@ -4,6 +4,7 @@ import type { CompanyProfile, Topic } from '@/lib/local-store'
 import { getAllWeeks } from '@/lib/local-store'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 30
 
 export async function POST(req: NextRequest) {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -37,10 +38,13 @@ export async function POST(req: NextRequest) {
   }
 
   // Pull all previously used topic titles from past weeks to avoid repetition
-  const pastWeeks = getAllWeeks()
-  const usedTopics = pastWeeks
-    .flatMap((w) => w.topics.map((t) => t.title))
-    .slice(0, 30) // last 30 topics max
+  let usedTopics: string[] = []
+  try {
+    const pastWeeks = getAllWeeks()
+    usedTopics = pastWeeks.flatMap((w) => w.topics.map((t) => t.title)).slice(0, 30)
+  } catch {
+    usedTopics = []
+  }
 
   // 2. Claude call to generate 7 topics
   const prompt = `Company: ${profile.name}
