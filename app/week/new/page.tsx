@@ -126,7 +126,7 @@ export default function NewWeekPage() {
         topics,
         posts: allPosts,
         graphics: [],
-        status: 'draft',
+        status: allPosts.length > 0 ? 'complete' : 'draft',
       }
 
       // Save to localStorage
