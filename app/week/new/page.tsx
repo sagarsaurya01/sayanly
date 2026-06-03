@@ -81,19 +81,30 @@ export default function NewWeekPage() {
         return
       }
 
-      // Generate posts in small batches of 2 to avoid Netlify 10s timeout
+      // Generate 1 topic at a time — safest for Netlify 10s function limit
       const allPosts: Post[] = []
-      const batchSize = 2
-      for (let i = 0; i < approvedTopics.length; i += batchSize) {
-        const batch = approvedTopics.slice(i, i + batchSize)
+      for (const topic of approvedTopics) {
         const res = await fetch('/api/posts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ profile, topics: batch.map(t => ({ ...t, approved: true })) }),
+          body: JSON.stringify({ profile, topics: [{ ...topic, approved: true }] }),
         })
-        const data = await res.json() as { posts?: Post[]; error?: string }
+        if (!res.ok) {
+          setError(`Server error (${res.status}) — try reducing topics selected`)
+          setGeneratingPosts(false)
+          return
+        }
+        const text = await res.text()
+        let data: { posts?: Post[]; error?: string }
+        try {
+          data = JSON.parse(text)
+        } catch {
+          setError(`Server returned invalid response — please try again`)
+          setGeneratingPosts(false)
+          return
+        }
         if (!data.posts) {
-          setError(`Error generating posts: ${data.error ?? `HTTP ${res.status}`}`)
+          setError(`Error: ${data.error ?? 'No posts returned'}`)
           setGeneratingPosts(false)
           return
         }
