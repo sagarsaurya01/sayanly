@@ -178,7 +178,7 @@ export default function NewWeekPage() {
           </svg>
         </button>
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center font-bold text-xs">S</div>
+          <div className="w-7 h-7 rounded-lg bg-orange-600 flex items-center justify-center font-bold text-xs">S</div>
           <span className="font-semibold text-white">New Week</span>
         </div>
 
@@ -187,7 +187,7 @@ export default function NewWeekPage() {
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center gap-2">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                step === s ? 'bg-purple-600 text-white' : step > s ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/[0.05] text-white/30'
+                step === s ? 'bg-orange-600 text-white' : step > s ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/[0.05] text-white/30'
               }`}>
                 {step > s ? '✓' : s}
               </div>
@@ -219,7 +219,7 @@ export default function NewWeekPage() {
                       <h2 className="text-xl font-semibold text-white">{profile.name}</h2>
                       <p className="text-white/50 text-sm mt-1">{profile.description}</p>
                     </div>
-                    <span className="px-3 py-1 rounded-full bg-purple-600/10 border border-purple-500/20 text-purple-400 text-xs font-medium capitalize">
+                    <span className="px-3 py-1 rounded-full bg-orange-600/10 border border-orange-500/20 text-orange-400 text-xs font-medium capitalize">
                       {profile.tone}
                     </span>
                   </div>
@@ -268,7 +268,7 @@ export default function NewWeekPage() {
                         }
                       }}
                       placeholder="e.g. Why 95% of traders lose money in F&O"
-                      className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-purple-500/40 transition-colors"
+                      className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-orange-500/40 transition-colors"
                     />
                     <button
                       onClick={addCustomTopic}
@@ -283,7 +283,7 @@ export default function NewWeekPage() {
                   {topics.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {topics.map((t) => (
-                        <div key={t.id} className="flex items-center justify-between gap-3 bg-purple-600/10 border border-purple-500/20 rounded-lg px-3 py-2">
+                        <div key={t.id} className="flex items-center justify-between gap-3 bg-orange-600/10 border border-orange-500/20 rounded-lg px-3 py-2">
                           <span className="text-sm text-white/80 flex-1">{t.title}</span>
                           <button
                             onClick={() => setTopics((prev) => prev.filter((x) => x.id !== t.id))}
@@ -389,7 +389,7 @@ export default function NewWeekPage() {
             )}
 
             {generatingPosts && (
-              <div className="mb-6 px-4 py-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm text-center animate-pulse">
+              <div className="mb-6 px-4 py-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-300 text-sm text-center animate-pulse">
                 Writing {approvedCount * 3} posts across all platforms… This may take 30–60 seconds.
               </div>
             )}
@@ -399,7 +399,7 @@ export default function NewWeekPage() {
                 <div
                   key={topic.id}
                   className={`glass rounded-xl p-5 transition-all ${
-                    topic.approved ? 'border-purple-500/30 bg-purple-500/5' : ''
+                    topic.approved ? 'border-orange-500/30 bg-orange-500/5' : ''
                   }`}
                 >
                   <div className="flex items-start gap-4">
@@ -408,7 +408,7 @@ export default function NewWeekPage() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <input
-                        className="w-full bg-transparent text-white font-semibold text-base border-none outline-none focus:text-purple-300 transition-colors placeholder-white/30"
+                        className="w-full bg-transparent text-white font-semibold text-base border-none outline-none focus:text-orange-300 transition-colors placeholder-white/30"
                         value={topic.title}
                         onChange={(e) => updateTitle(topic.id, e.target.value)}
                       />
@@ -426,7 +426,7 @@ export default function NewWeekPage() {
                       onClick={() => toggleApprove(topic.id)}
                       className={`shrink-0 w-8 h-8 rounded-full border flex items-center justify-center transition-all ${
                         topic.approved
-                          ? 'bg-purple-600 border-purple-500 text-white'
+                          ? 'bg-orange-600 border-orange-500 text-white'
                           : 'border-white/[0.07] text-white/20 hover:border-white/20 hover:text-white/40'
                       }`}
                     >
@@ -455,7 +455,7 @@ export default function NewWeekPage() {
                   onChange={(e) => setCustomTopic(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addCustomTopic()}
                   placeholder="Type a topic idea and press Enter…"
-                  className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-purple-500/40 transition-colors"
+                  className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-orange-500/40 transition-colors"
                 />
                 <button
                   onClick={addCustomTopic}

@@ -31,7 +31,7 @@ export default function ProfilePage() {
     description: '',
     target_audience: '',
     tone: 'professional',
-    brand_colors: { primary: '#7c3aed', secondary: '#6d28d9' },
+    brand_colors: { primary: '#ff6b35', secondary: '#e8551f' },
     platforms: ['linkedin'],
     past_posts: '',
     competitor_posts: '',
@@ -77,7 +77,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
-        <div className="h-8 w-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+        <div className="h-8 w-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -87,7 +87,7 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="border-b border-white/[0.06] px-8 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center font-bold text-sm">S</div>
+          <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center font-bold text-sm">S</div>
           <span className="font-semibold text-white">Sayanly</span>
         </div>
         <button onClick={handleSave} disabled={saving || !form.name} className="btn-primary">
@@ -148,7 +148,7 @@ export default function ProfilePage() {
                     onClick={() => setForm((p) => ({ ...p, tone: t.value }))}
                     className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                       form.tone === t.value
-                        ? 'bg-purple-600 border-purple-500 text-white'
+                        ? 'bg-orange-600 border-orange-500 text-white'
                         : 'border-white/[0.07] text-white/50 hover:border-white/20 hover:text-white/80'
                     }`}
                   >
@@ -176,7 +176,7 @@ export default function ProfilePage() {
                     className="input-glass"
                     value={form.brand_colors.primary}
                     onChange={(e) => setForm((p) => ({ ...p, brand_colors: { ...p.brand_colors, primary: e.target.value } }))}
-                    placeholder="#7c3aed"
+                    placeholder="#ff6b35"
                   />
                 </div>
               </div>
@@ -193,7 +193,7 @@ export default function ProfilePage() {
                     className="input-glass"
                     value={form.brand_colors.secondary}
                     onChange={(e) => setForm((p) => ({ ...p, brand_colors: { ...p.brand_colors, secondary: e.target.value } }))}
-                    placeholder="#6d28d9"
+                    placeholder="#e8551f"
                   />
                 </div>
               </div>
@@ -213,7 +213,7 @@ export default function ProfilePage() {
                     onClick={() => togglePlatform(p.value)}
                     className={`flex-1 flex flex-col items-center gap-2 py-4 rounded-xl border transition-all ${
                       active
-                        ? 'border-purple-500 bg-purple-600/10 text-white'
+                        ? 'border-orange-500 bg-orange-600/10 text-white'
                         : 'border-white/[0.07] text-white/40 hover:border-white/20 hover:text-white/60'
                     }`}
                   >

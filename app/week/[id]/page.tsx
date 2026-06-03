@@ -138,7 +138,7 @@ function PostsTab({ week }: { week: Week }) {
             onClick={() => setFilter(p)}
             className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
               filter === p
-                ? 'bg-purple-600 border-purple-500 text-white'
+                ? 'bg-orange-600 border-orange-500 text-white'
                 : 'border-white/[0.07] text-white/50 hover:border-white/20 hover:text-white/70'
             }`}
           >
@@ -156,7 +156,7 @@ function PostsTab({ week }: { week: Week }) {
           return (
             <div key={topic.id}>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-6 h-6 rounded-full bg-purple-600/20 border border-purple-500/20 flex items-center justify-center text-xs text-purple-400 font-bold">
+                <div className="w-6 h-6 rounded-full bg-orange-600/20 border border-orange-500/20 flex items-center justify-center text-xs text-orange-400 font-bold">
                   {topic.id}
                 </div>
                 <h3 className="font-semibold text-white">{topic.title}</h3>
@@ -222,7 +222,7 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          profile: profile ?? { name: week.profile_id, description: topic.title, brand_colors: { primary: '#7c3aed', secondary: '#6d28d9' } },
+          profile: profile ?? { name: week.profile_id, description: topic.title, brand_colors: { primary: '#ff6b35', secondary: '#e8551f' } },
           topic,
           post,
         }),
@@ -306,7 +306,7 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
               <div className="aspect-[1200/630] bg-white/[0.02] relative">
                 {isLoading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 shimmer">
-                    <div className="h-8 w-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+                    <div className="h-8 w-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
                     <p className="text-xs text-white/40">Generating with DALL·E 3… (~20s)</p>
                   </div>
                 )}
@@ -480,7 +480,7 @@ function ExportTab({ week }: { week: Week }) {
             <p className="text-xs text-white/40 mt-0.5">Topics</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-purple-400">{totalPosts}</p>
+            <p className="text-2xl font-bold text-orange-400">{totalPosts}</p>
             <p className="text-xs text-white/40 mt-0.5">Total Posts</p>
           </div>
           <div className="text-center">
@@ -547,7 +547,7 @@ export default function WeekPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
-        <div className="h-8 w-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+        <div className="h-8 w-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -583,7 +583,7 @@ export default function WeekPage() {
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center font-bold text-xs shrink-0">S</div>
+          <div className="w-7 h-7 rounded-lg bg-orange-600 flex items-center justify-center font-bold text-xs shrink-0">S</div>
           <div>
             <p className="text-sm font-semibold text-white leading-none">{week.week_label}</p>
             <p className="text-xs text-white/40 mt-0.5">{week.topics.length} topics · {week.posts.length} posts generated</p>
@@ -598,7 +598,7 @@ export default function WeekPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
                 activeTab === tab.key
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-orange-600 text-white'
                   : 'text-white/50 hover:text-white/70'
               }`}
             >
