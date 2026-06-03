@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import type { CompanyProfile, Topic, Post } from '@/lib/local-store'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+export const dynamic = 'force-dynamic'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? '' })
 
 async function generateBatch(profile: CompanyProfile, topics: Topic[]): Promise<Post[]> {
   const topicList = topics
@@ -76,6 +78,7 @@ Return ONLY valid JSON, no markdown:
 }
 
 export async function POST(req: NextRequest) {
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   try {
     const body = await req.json() as { profile: CompanyProfile; topics: Topic[] }
     const { profile, topics } = body
