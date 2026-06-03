@@ -71,8 +71,12 @@ function readStore(): Store {
 }
 
 function writeStore(store: Store): void {
-  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true })
-  fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), 'utf-8')
+  try {
+    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true })
+    fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), 'utf-8')
+  } catch {
+    // Silently fail on read-only filesystems (e.g. Netlify)
+  }
 }
 
 // ── Profile ────────────────────────────────────────────────────────────────
