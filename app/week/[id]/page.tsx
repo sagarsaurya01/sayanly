@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import type { Week, Post, Graphic, Topic, CompanyProfile } from '@/lib/local-store'
+import { toast } from 'sonner'
 
 // ── Platform icons ──────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
   async function copy() {
     await navigator.clipboard.writeText(text)
     setCopied(true)
+    toast.success('Copied to clipboard!')
     setTimeout(() => setCopied(false), 1500)
   }
   return (
@@ -398,6 +400,7 @@ function ExportTab({ week }: { week: Week }) {
     }).join('\n\n---\n\n')
     navigator.clipboard.writeText(texts)
     setCopied(platform)
+    toast.success(`All ${platform} posts copied!`)
     setTimeout(() => setCopied(null), 2000)
   }
 
