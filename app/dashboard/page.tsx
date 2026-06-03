@@ -5,33 +5,12 @@ import { useRouter } from 'next/navigation'
 import type { Week } from '@/lib/local-store'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 
-const PLATFORM_LABELS: Record<string, string> = {
-  linkedin: 'LinkedIn',
-  facebook: 'Facebook',
-}
-
-const PLATFORM_STYLES: Record<string, string> = {
-  linkedin: 'bg-[#0077B5]/15 text-[#4db8ff] border border-[#0077B5]/25',
-  facebook: 'bg-[#1877F2]/15 text-[#6ba3f5] border border-[#1877F2]/25',
-}
-
-const PLATFORM_DOT_COLORS: Record<string, string> = {
-  linkedin: 'bg-[#0077B5]',
-  facebook: 'bg-[#1877F2]',
-}
-
-const WEEK_GRADIENTS = [
-  'from-violet-600/40 to-purple-900/30',
-  'from-blue-600/40 to-indigo-900/30',
-  'from-pink-600/40 to-rose-900/30',
-  'from-emerald-600/40 to-teal-900/30',
-  'from-amber-600/40 to-orange-900/30',
-  'from-cyan-600/40 to-blue-900/30',
-]
-
-const WEEK_STRIP_GRADIENTS = [
+const STRIP_GRADIENTS = [
   'from-violet-500 to-purple-700',
   'from-blue-500 to-indigo-700',
   'from-pink-500 to-rose-700',
@@ -51,105 +30,6 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(days / 30)}mo ago`
 }
 
-function WeekCard({ week, index, onDelete }: { week: Week; index: number; onDelete: () => void }) {
-  const router = useRouter()
-  const gradient = WEEK_GRADIENTS[index % WEEK_GRADIENTS.length]
-  const stripGradient = WEEK_STRIP_GRADIENTS[index % WEEK_STRIP_GRADIENTS.length]
-  const platforms = ['linkedin', 'facebook']
-  const postCount = week.posts.length
-  const topicCount = week.topics.length
-  const graphicCount = week.graphics?.length ?? 0
-  const dateStr = new Date(week.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-  const firstThreeTopics = week.topics.slice(0, 3)
-
-  return (
-    <div
-      className="relative glass rounded-2xl overflow-hidden cursor-pointer group card-hover animate-fade-in flex flex-col"
-      style={{ minHeight: 240 }}
-      onClick={() => router.push(`/week/${week.id}`)}
-    >
-      {/* Gradient header strip */}
-      <div className={`h-1.5 w-full bg-gradient-to-r ${stripGradient} shrink-0`} />
-
-      {/* Delete button */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete() }}
-        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-white/20 hover:text-red-400 z-10"
-      >
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      </button>
-
-      <div className="p-5 flex flex-col flex-1">
-        {/* Status + date */}
-        <div className="flex items-center justify-between mb-3">
-          <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${
-            week.status === 'complete'
-              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-          }`}>
-            {week.status === 'complete' ? '✓ Complete' : '● Draft'}
-          </span>
-          <span className="text-[11px] text-white/30">{dateStr}</span>
-        </div>
-
-        {/* Title */}
-        <h3 className="font-bold text-white text-sm leading-snug mb-3 group-hover:text-purple-200 transition-colors pr-6">
-          {week.week_label}
-        </h3>
-
-        {/* Topic titles */}
-        {firstThreeTopics.length > 0 && (
-          <div className="mb-4 space-y-1.5">
-            {firstThreeTopics.map((topic, i) => (
-              <div key={topic.id ?? i} className="flex items-center gap-1.5 min-w-0">
-                <div className={`w-1 h-1 rounded-full shrink-0 bg-gradient-to-r ${stripGradient} opacity-70`} />
-                <p className="text-[11px] text-white/40 truncate leading-tight">{topic.title}</p>
-              </div>
-            ))}
-            {week.topics.length > 3 && (
-              <p className="text-[10px] text-white/20 pl-3">+{week.topics.length - 3} more</p>
-            )}
-          </div>
-        )}
-
-        <div className="flex-1" />
-
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-1.5 mb-4">
-          {[
-            { label: 'Topics', value: topicCount },
-            { label: 'Posts', value: postCount },
-            { label: 'Graphics', value: graphicCount },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-white/[0.03] rounded-lg px-2 py-2 text-center border border-white/[0.05]">
-              <p className="text-base font-black text-white">{stat.value}</p>
-              <p className="text-[9px] text-white/30 mt-0.5">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Platforms */}
-        <div className="flex gap-1.5 flex-wrap">
-          {platforms.map((p) => (
-            <span key={p} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${PLATFORM_STYLES[p]}`}>
-              {PLATFORM_LABELS[p]}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Arrow */}
-      <div className="absolute bottom-5 right-5 w-6 h-6 rounded-md flex items-center justify-center text-white/20 group-hover:text-purple-400 group-hover:bg-purple-500/10 transition-all">
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </div>
-    </div>
-  )
-}
-
 export default function DashboardPage() {
   const router = useRouter()
   const [weeks, setWeeks] = useState<Week[]>([])
@@ -159,7 +39,7 @@ export default function DashboardPage() {
 
   function loadWeeks() {
     fetch('/api/weeks')
-      .then((r) => r.json())
+      .then(r => r.json())
       .then((data: Week[] | { weeks: Week[] }) => {
         const arr = Array.isArray(data) ? data : (data.weeks ?? [])
         setWeeks(arr)
@@ -184,227 +64,159 @@ export default function DashboardPage() {
   }
 
   const totalPosts = weeks.reduce((acc, w) => acc + w.posts.length, 0)
+  const totalGraphics = weeks.reduce((acc, w) => acc + (w.graphics?.length ?? 0), 0)
   const completedWeeks = weeks.filter(w => w.status === 'complete').length
-  const latestWeek = weeks[0] ?? null
-
-  // Platform content counts across all weeks
-  const platformCounts = weeks.reduce(
-    (acc, w) => {
-      w.posts.forEach((post) => {
-        if (post.linkedin) acc.linkedin += 1
-        if (post.facebook) acc.facebook += 1
-      })
-      return acc
-    },
-    { linkedin: 0, facebook: 0 }
-  )
-
-  // Recent posts from most recent week (last 4)
-  const recentPosts = latestWeek
-    ? latestWeek.posts.slice(0, 4).map((post) => {
-        const topic = latestWeek.topics.find((t) => t.id === post.topic_id)
-        return { post, topic }
-      })
-    : []
-
-  // Activity feed: last 4 weeks as activity rows
-  const activityItems = weeks.slice(0, 4).map((w) => ({
-    label: 'Week created',
-    detail: w.week_label,
-    sub: `${w.posts.length} posts generated`,
-    time: relativeTime(w.created_at),
-    color: w.status === 'complete' ? 'bg-emerald-400' : 'bg-amber-400',
-  }))
 
   return (
-    <div className="min-h-screen bg-black flex text-white">
+    <div className="flex h-screen bg-black text-white overflow-hidden">
 
-      {/* ── Sidebar ── */}
-      <aside className="fixed top-0 left-0 h-full w-[220px] border-r border-white/[0.06] flex flex-col bg-[#080808] z-10 overflow-y-auto">
+      {/* ── SIDEBAR ── */}
+      <aside className="w-[240px] shrink-0 border-r border-white/[0.06] bg-[#080808] flex flex-col h-full">
 
         {/* Logo */}
-        <div className="h-14 px-5 flex items-center border-b border-white/[0.05] shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center text-xs font-black">S</div>
-            <span className="font-black text-sm tracking-tight">SAYANLY</span>
+        <div className="px-5 h-16 flex items-center border-b border-white/[0.05]">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center text-sm font-black shadow-lg shadow-purple-700/30">S</div>
+            <div>
+              <p className="font-black text-sm tracking-tight text-white">SAYANLY</p>
+              <p className="text-[10px] text-zinc-600">AI Content Factory</p>
+            </div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="px-3 pt-4 space-y-0.5 shrink-0">
-          {[
-            { label: 'Dashboard', path: '/dashboard', active: true, icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
-            { label: 'New Week', path: '/week/new', active: false, icon: <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /> },
-            { label: 'Profile', path: '/profile', active: false, icon: <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> },
-          ].map((item) => (
-            <button
-              key={item.label}
-              onClick={() => router.push(item.path)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                item.active
-                  ? 'bg-white/[0.06] border border-white/[0.08] text-white'
-                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{item.icon}</svg>
-              {item.label}
-            </button>
-          ))}
+        <nav className="px-3 pt-5 space-y-1">
+          <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-[0.18em] px-3 mb-2">Menu</p>
+
+          <button onClick={() => router.push('/dashboard')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-600/15 border border-purple-500/20 text-sm font-semibold text-purple-300">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <rect x="1" y="1" width="5.5" height="5.5" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+              <rect x="8.5" y="1" width="5.5" height="5.5" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+              <rect x="1" y="8.5" width="5.5" height="5.5" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+              <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+            </svg>
+            Dashboard
+          </button>
+
+          <button onClick={() => router.push('/week/new')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition-all">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M7.5 1v13M1 7.5h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            New Week
+          </button>
+
+          <button onClick={() => router.push('/profile')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition-all">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <circle cx="7.5" cy="5" r="3" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M1.5 13.5c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            Company Profile
+          </button>
         </nav>
 
-        <div className="mx-4 my-4 border-t border-white/[0.05] shrink-0" />
+        <Separator className="mx-4 my-5 bg-white/[0.05] w-auto" />
 
-        {/* Overview stats */}
-        <div className="px-4 space-y-1 shrink-0">
-          <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-[0.18em] mb-3 px-1">Overview</p>
+        {/* Platform stats */}
+        <div className="px-3 space-y-1">
+          <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-[0.18em] px-3 mb-3">Platforms</p>
           {[
-            { label: 'Total Weeks', value: weeks.length, color: 'text-white' },
-            { label: 'Completed', value: completedWeeks, color: 'text-emerald-400' },
-            { label: 'Total Posts', value: totalPosts, color: 'text-purple-400' },
-          ].map((s) => (
-            <div key={s.label} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.03] transition-colors">
-              <span className="text-xs text-zinc-500">{s.label}</span>
-              <span className={`text-xs font-black tabular-nums ${s.color}`}>{s.value}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="mx-4 my-4 border-t border-white/[0.05] shrink-0" />
-
-        {/* Content by Platform */}
-        <div className="px-4 shrink-0">
-          <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-[0.18em] mb-3 px-1">Content by Platform</p>
-          {(['linkedin', 'facebook'] as const).map((p) => (
-            <div key={p} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.03] transition-colors">
+            { label: 'LinkedIn Posts', value: loading ? '—' : weeks.reduce((a, w) => a + w.posts.filter(p => p.linkedin).length, 0), color: 'text-[#4db8ff]', dot: 'bg-[#0077B5]' },
+            { label: 'Facebook Posts', value: loading ? '—' : weeks.reduce((a, w) => a + w.posts.filter(p => p.facebook).length, 0), color: 'text-[#6ba3f5]', dot: 'bg-[#1877F2]' },
+            { label: 'Graphics Made', value: loading ? '—' : totalGraphics, color: 'text-purple-400', dot: 'bg-purple-500' },
+          ].map(s => (
+            <div key={s.label} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full shrink-0 ${PLATFORM_DOT_COLORS[p]}`} />
-                <span className="text-xs text-zinc-400">{PLATFORM_LABELS[p]}</span>
+                <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                <span className="text-xs text-zinc-500">{s.label}</span>
               </div>
-              <span className="text-xs font-black text-white/60 tabular-nums">{platformCounts[p]}</span>
+              <span className={`text-sm font-black tabular-nums ${s.color}`}>{s.value}</span>
             </div>
           ))}
-        </div>
-
-        <div className="mx-4 my-4 border-t border-white/[0.05] shrink-0" />
-
-        {/* Recent Activity feed */}
-        <div className="px-4 shrink-0">
-          <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-[0.18em] mb-3 px-1">Recent Activity</p>
-          {activityItems.length === 0 ? (
-            <p className="text-[11px] text-zinc-700 px-3">No activity yet</p>
-          ) : (
-            <div className="space-y-1">
-              {activityItems.map((item, i) => (
-                <div key={i} className="px-3 py-2 rounded-lg hover:bg-white/[0.03] transition-colors">
-                  <div className="flex items-start gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1.5 ${item.color}`} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] text-white/70 font-medium truncate">{item.label}</p>
-                      <p className="text-[10px] text-zinc-600 truncate">{item.detail}</p>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-[10px] text-zinc-700">{item.sub}</p>
-                        <p className="text-[10px] text-zinc-700 shrink-0 ml-1">{item.time}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="flex-1" />
 
-        {/* Beta */}
-        <div className="px-5 py-4 border-t border-white/[0.05] shrink-0">
-          <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold tracking-[0.18em] text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2.5 py-1 rounded-full uppercase">Beta</span>
-            <span className="text-[10px] text-zinc-700">v1.0</span>
-          </div>
+        <div className="px-5 py-4 border-t border-white/[0.05]">
+          <Badge variant="outline" className="border-purple-500/30 text-purple-400 bg-purple-500/10 text-[10px]">
+            Beta v1.0
+          </Badge>
         </div>
       </aside>
 
-      {/* ── Main ── */}
-      <main className="ml-[220px] flex-1 flex flex-col min-h-screen">
+      {/* ── MAIN ── */}
+      <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
 
         {/* Glow */}
-        <div className="fixed pointer-events-none" style={{ left: 220, right: 0, top: 0, bottom: 0, zIndex: 0 }}>
-          <div className="absolute -top-48 left-1/3 w-[500px] h-[500px] bg-purple-700/15 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-violet-800/10 rounded-full blur-[100px]" />
+        <div className="pointer-events-none fixed overflow-hidden" style={{ left: 240, right: 0, top: 0, bottom: 0, zIndex: 0 }}>
+          <div className="absolute -top-48 left-1/3 w-[600px] h-[600px] bg-purple-700/15 rounded-full blur-[140px]" />
+          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-violet-800/10 rounded-full blur-[110px]" />
         </div>
 
         {/* Top bar */}
-        <div className="relative z-10 sticky top-0 border-b border-white/[0.06] px-8 h-14 flex items-center justify-between bg-black/70 backdrop-blur-xl">
+        <div className="relative z-10 shrink-0 border-b border-white/[0.06] backdrop-blur-xl bg-black/70 px-8 h-16 flex items-center justify-between">
           <div>
-            <p className="text-sm font-bold text-white">Content Dashboard</p>
-            <p className="text-[11px] text-zinc-600">
+            <h1 className="text-base font-bold text-white">Content Dashboard</h1>
+            <p className="text-[11px] text-zinc-500 mt-0.5">
               {loading ? 'Loading...' : `${weeks.length} week${weeks.length !== 1 ? 's' : ''} · ${totalPosts} posts generated`}
             </p>
           </div>
-          <button
-            onClick={() => router.push('/week/new')}
-            className="btn-primary inline-flex items-center gap-2 text-sm font-semibold px-5 py-2 rounded-xl"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          <button onClick={() => router.push('/week/new')}
+            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-purple-700/20">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
             New Week
-          </button>
-        </div>
-
-        {/* Quick Actions bar */}
-        <div className="relative z-10 border-b border-white/[0.04] px-8 py-2.5 flex items-center gap-2 bg-black/40 backdrop-blur-sm">
-          <button
-            onClick={() => router.push('/week/new')}
-            className="btn-primary text-xs font-semibold px-4 py-1.5 rounded-lg"
-          >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            New Week
-          </button>
-          {latestWeek && (
-            <button
-              onClick={() => router.push(`/week/${latestWeek.id}`)}
-              className="btn-ghost text-xs font-medium px-4 py-1.5 rounded-lg"
-            >
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              View Latest Week
-            </button>
-          )}
-          <button
-            onClick={() => router.push('/profile')}
-            className="btn-ghost text-xs font-medium px-4 py-1.5 rounded-lg"
-          >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Edit Profile
           </button>
         </div>
 
         {/* Content */}
-        <div className="relative z-10 flex-1 px-8 py-8">
+        <div className="relative z-10 flex-1 overflow-y-auto px-8 py-8">
 
-          {loading ? (
+          {/* Stats row */}
+          {!loading && weeks.length > 0 && (
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              {[
+                { label: 'Total Weeks', value: weeks.length, sub: 'content weeks', color: 'from-purple-600/20 to-violet-600/10', border: 'border-purple-500/20', text: 'text-purple-300' },
+                { label: 'Completed', value: completedWeeks, sub: 'fully done', color: 'from-emerald-600/20 to-teal-600/10', border: 'border-emerald-500/20', text: 'text-emerald-300' },
+                { label: 'Total Posts', value: totalPosts, sub: 'across all weeks', color: 'from-blue-600/20 to-indigo-600/10', border: 'border-blue-500/20', text: 'text-blue-300' },
+                { label: 'Graphics', value: totalGraphics, sub: 'images generated', color: 'from-orange-600/20 to-amber-600/10', border: 'border-orange-500/20', text: 'text-orange-300' },
+              ].map(s => (
+                <Card key={s.label} className={`bg-gradient-to-br ${s.color} border ${s.border} rounded-2xl`}>
+                  <CardContent className="p-5">
+                    <p className="text-3xl font-black text-white">{s.value}</p>
+                    <p className={`text-sm font-semibold mt-1 ${s.text}`}>{s.label}</p>
+                    <p className="text-[11px] text-zinc-600 mt-0.5">{s.sub}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Loading skeletons */}
+          {loading && (
             <div>
-              <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.16em] mb-6">All Weeks</p>
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-4 gap-4 mb-8">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="glass rounded-2xl overflow-hidden" style={{ minHeight: 240 }}>
+                  <Skeleton key={i} className="h-24 rounded-2xl bg-white/[0.05]" />
+                ))}
+              </div>
+              <Skeleton className="h-5 w-32 bg-white/[0.05] mb-6" />
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-white/[0.07] overflow-hidden bg-white/[0.02]">
                     <Skeleton className="h-1.5 w-full bg-white/[0.06]" />
                     <div className="p-5 space-y-3">
                       <div className="flex justify-between">
-                        <Skeleton className="h-5 w-20 bg-white/[0.05]" />
+                        <Skeleton className="h-5 w-20 rounded-full bg-white/[0.05]" />
                         <Skeleton className="h-4 w-16 bg-white/[0.04]" />
                       </div>
                       <Skeleton className="h-4 w-full bg-white/[0.05]" />
                       <Skeleton className="h-3 w-3/4 bg-white/[0.04]" />
                       <Skeleton className="h-3 w-2/3 bg-white/[0.04]" />
-                      <div className="grid grid-cols-3 gap-1.5 pt-4">
+                      <div className="grid grid-cols-3 gap-1.5 pt-2">
                         {[...Array(3)].map((_, j) => (
                           <Skeleton key={j} className="h-12 rounded-lg bg-white/[0.04]" />
                         ))}
@@ -414,34 +226,44 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-          ) : weeks.length === 0 ? (
+          )}
+
+          {/* Empty state */}
+          {!loading && weeks.length === 0 && (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl glass border border-white/[0.08] flex items-center justify-center">
-                <svg className="w-7 h-7 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              <div className="w-20 h-20 rounded-3xl bg-purple-600/15 border border-purple-500/20 flex items-center justify-center mb-6">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <path d="M16 4C9.37 4 4 9.37 4 16s5.37 12 12 12 12-5.37 12-12S22.63 4 16 4z" stroke="#a855f7" strokeWidth="1.5"/>
+                  <path d="M11 16l3.5 3.5L21 11" stroke="#a855f7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">No weeks yet</h2>
-              <p className="text-sm text-zinc-500 mb-8 max-w-xs">Create your first AI-powered content week — 7 topics, 21 posts, ready to go.</p>
-              <button onClick={() => router.push('/week/new')} className="btn-primary inline-flex items-center gap-2 px-7 py-3 rounded-2xl font-bold text-sm">
+              <h2 className="text-2xl font-bold text-white mb-2">No weeks yet</h2>
+              <p className="text-zinc-500 text-sm mb-8 max-w-xs leading-relaxed">
+                Create your first AI-powered content week — 7 topics, 21 posts across LinkedIn and Facebook, ready to go.
+              </p>
+              <button onClick={() => router.push('/week/new')}
+                className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-bold px-8 py-3.5 rounded-2xl text-sm transition-all shadow-lg shadow-purple-700/20">
                 Create First Week
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 7h10M7.5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
             </div>
-          ) : (
-            <>
-              {/* All Weeks grid */}
-              <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.16em] mb-6">All Weeks</p>
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-12">
+          )}
+
+          {/* Weeks grid */}
+          {!loading && weeks.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.16em] mb-5">All Weeks</p>
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
 
                 {/* New week card */}
-                <button
-                  onClick={() => router.push('/week/new')}
-                  className="glass rounded-2xl border border-dashed border-white/[0.07] hover:border-purple-500/40 hover:bg-purple-500/[0.03] transition-all duration-200 flex flex-col items-center justify-center gap-3 group"
-                  style={{ minHeight: 240 }}
-                >
-                  <div className="w-10 h-10 rounded-xl glass border border-white/[0.09] group-hover:border-purple-500/30 flex items-center justify-center transition-all">
-                    <svg className="w-4 h-4 text-zinc-600 group-hover:text-purple-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                <button onClick={() => router.push('/week/new')}
+                  className="group rounded-2xl border-2 border-dashed border-white/[0.08] hover:border-purple-500/40 hover:bg-purple-500/[0.03] transition-all duration-200 flex flex-col items-center justify-center min-h-[260px] gap-4">
+                  <div className="w-12 h-12 rounded-xl border border-white/[0.10] group-hover:border-purple-500/30 bg-white/[0.03] flex items-center justify-center transition-all">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M10 2v16M2 10h16" stroke="#52525b" strokeWidth="1.6" strokeLinecap="round"
+                        className="group-hover:stroke-purple-400 transition-colors"/>
                     </svg>
                   </div>
                   <div className="text-center">
@@ -450,97 +272,116 @@ export default function DashboardPage() {
                   </div>
                 </button>
 
-                {weeks.map((week, i) => (
-                  <WeekCard key={week.id} week={week} index={i} onDelete={() => setConfirmDelete(week.id)} />
-                ))}
-              </div>
+                {/* Week cards */}
+                {weeks.map((week, i) => {
+                  const stripGradient = STRIP_GRADIENTS[i % STRIP_GRADIENTS.length]
+                  const postCount = week.posts.length
+                  const topicCount = week.topics.length
+                  const graphicCount = week.graphics?.length ?? 0
+                  const isComplete = week.status === 'complete'
+                  const firstThree = week.topics.slice(0, 3)
 
-              {/* Recent Posts Preview */}
-              {recentPosts.length > 0 && (
-                <div className="mb-8">
-                  <div className="flex items-center justify-between mb-5">
-                    <div>
-                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.16em]">Recent Posts</p>
-                      <p className="text-[11px] text-zinc-700 mt-0.5">From {latestWeek?.week_label}</p>
-                    </div>
-                    {latestWeek && (
+                  return (
+                    <Card key={week.id}
+                      className="group rounded-2xl border border-white/[0.08] hover:border-white/[0.16] bg-[#0a0a0a] transition-all duration-200 overflow-hidden cursor-pointer p-0 relative"
+                      onClick={() => router.push(`/week/${week.id}`)}>
+
+                      {/* Color strip */}
+                      <div className={`h-1.5 w-full bg-gradient-to-r ${stripGradient}`} />
+
+                      {/* Delete button */}
                       <button
-                        onClick={() => router.push(`/week/${latestWeek.id}`)}
-                        className="text-[11px] text-purple-400 hover:text-purple-300 transition-colors font-medium"
-                      >
-                        View all →
+                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(week.id) }}
+                        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg hover:bg-red-500/10 text-white/20 hover:text-red-400 flex items-center justify-center z-10">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
-                    )}
-                  </div>
 
-                  {/* Horizontal scroll on mobile, 2-col grid on desktop */}
-                  <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-2 md:overflow-visible md:pb-0">
-                    {recentPosts.map(({ post, topic }, i) => {
-                      const linkedinContent = post.linkedin
-                      const hook = linkedinContent?.hook ?? ''
-                      const topicTitle = topic?.title ?? 'Untitled'
-
-                      return (
-                        <div
-                          key={i}
-                          className="glass rounded-2xl p-5 shrink-0 w-72 md:w-auto flex flex-col gap-3 hover:bg-white/[0.04] transition-colors"
-                        >
-                          {/* Topic title + platform badge */}
-                          <div className="flex items-start justify-between gap-3">
-                            <p className="text-sm font-semibold text-white/90 leading-snug line-clamp-2 flex-1">{topicTitle}</p>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${PLATFORM_STYLES.linkedin}`}>
-                              LinkedIn
-                            </span>
-                          </div>
-
-                          {/* Hook text */}
-                          {hook ? (
-                            <p className="text-[12px] text-zinc-400 leading-relaxed line-clamp-3">{hook}</p>
-                          ) : (
-                            <p className="text-[12px] text-zinc-700 italic">No hook available</p>
-                          )}
-
-                          {/* View button */}
-                          {latestWeek && (
-                            <button
-                              onClick={() => router.push(`/week/${latestWeek.id}`)}
-                              className="self-start text-[11px] font-semibold text-purple-400 hover:text-purple-300 transition-colors bg-purple-500/10 hover:bg-purple-500/15 border border-purple-500/20 px-3 py-1 rounded-lg mt-auto"
-                            >
-                              View →
-                            </button>
-                          )}
+                      <CardContent className="p-5">
+                        {/* Status + date */}
+                        <div className="flex items-center justify-between mb-3">
+                          <Badge className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 ${
+                            isComplete
+                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                              : 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
+                          }`}>
+                            {isComplete ? '✓ Complete' : '● Draft'}
+                          </Badge>
+                          <span className="text-[10px] text-zinc-600">{relativeTime(week.created_at)}</span>
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </>
+
+                        {/* Title */}
+                        <h3 className="font-bold text-white text-sm leading-snug mb-3 group-hover:text-purple-200 transition-colors pr-6">
+                          {week.week_label}
+                        </h3>
+
+                        {/* Topics preview */}
+                        {firstThree.length > 0 && (
+                          <div className="mb-4 space-y-1.5">
+                            {firstThree.map((topic, ti) => (
+                              <div key={topic.id ?? ti} className="flex items-center gap-1.5 min-w-0">
+                                <div className={`w-1 h-1 rounded-full shrink-0 bg-gradient-to-r ${stripGradient} opacity-70`} />
+                                <p className="text-[11px] text-zinc-500 truncate">{topic.title}</p>
+                              </div>
+                            ))}
+                            {week.topics.length > 3 && (
+                              <p className="text-[10px] text-zinc-700 pl-2.5">+{week.topics.length - 3} more topics</p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-3 gap-1.5 mb-4">
+                          {[
+                            { label: 'Topics', value: topicCount },
+                            { label: 'Posts', value: postCount },
+                            { label: 'Graphics', value: graphicCount },
+                          ].map(stat => (
+                            <div key={stat.label} className="bg-white/[0.03] rounded-xl px-2 py-2.5 text-center border border-white/[0.05]">
+                              <p className="text-base font-black text-white">{stat.value}</p>
+                              <p className="text-[9px] text-zinc-600 mt-0.5">{stat.label}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Platform badges */}
+                        <div className="flex gap-1.5 flex-wrap">
+                          <Badge className="text-[10px] font-semibold px-2 py-0.5 bg-[#0077B5]/15 text-[#4db8ff] border border-[#0077B5]/25">
+                            LinkedIn
+                          </Badge>
+                          <Badge className="text-[10px] font-semibold px-2 py-0.5 bg-[#1877F2]/15 text-[#6ba3f5] border border-[#1877F2]/25">
+                            Facebook
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
           )}
         </div>
       </main>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <Dialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
-        <DialogContent className="bg-zinc-950 border border-white/10 text-white">
+        <DialogContent className="bg-zinc-950 border border-white/10 text-white max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white">Delete Week?</DialogTitle>
             <DialogDescription className="text-zinc-400">
               This will permanently delete this week and all its posts and graphics. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2">
-            <button
-              onClick={() => setConfirmDelete(null)}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-400 hover:text-white border border-white/10 hover:border-white/20 transition-all"
-            >
+          <DialogFooter className="gap-2 mt-2">
+            <button onClick={() => setConfirmDelete(null)}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-400 hover:text-white border border-white/10 hover:border-white/20 transition-all">
               Cancel
             </button>
             <button
               onClick={() => confirmDelete && handleDelete(confirmDelete)}
               disabled={deleting}
-              className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-500 transition-all disabled:opacity-50"
-            >
+              className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-500 transition-all disabled:opacity-50">
               {deleting ? 'Deleting...' : 'Delete Week'}
             </button>
           </DialogFooter>
