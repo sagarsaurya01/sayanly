@@ -407,11 +407,11 @@ export default function NewWeekPage() {
               <button
                 onClick={handleGeneratePosts}
                 disabled={approvedCount === 0 || generatingPosts}
-                className="btn-primary"
+                className="btn-primary px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50"
               >
                 {generatingPosts ? (
                   <>
-                    <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin shrink-0" />
                     Generating…
                   </>
                 ) : (
@@ -509,11 +509,11 @@ export default function NewWeekPage() {
               <button
                 onClick={handleGeneratePosts}
                 disabled={approvedCount === 0 || generatingPosts}
-                className="btn-primary py-3 px-8"
+                className="btn-primary py-3 px-8 rounded-xl font-bold flex items-center gap-2 disabled:opacity-50"
               >
                 {generatingPosts ? (
                   <>
-                    <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin shrink-0" />
                     Writing posts…
                   </>
                 ) : (

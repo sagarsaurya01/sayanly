@@ -5,9 +5,10 @@ import type { CompanyProfile, Topic, Post } from '@/lib/local-store'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? '' })
-
 async function generateBatch(profile: CompanyProfile, topics: Topic[]): Promise<Post[]> {
+  // Initialize inside function so env var is always fresh
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
   const topicList = topics
     .map((t, i) => `${i + 1}. [ID: ${t.id}] ${t.title} (Platform: ${t.best_platform}, Format: ${t.format})`)
     .join('\n')
@@ -19,7 +20,7 @@ Tone: ${profile.tone}
 Topics:
 ${topicList}
 
-Write viral LinkedIn + Facebook posts. Style: Lara Acosta — short punchy hook (1-2 lines), "Here's [what/how/why]:" line, 3 numbered points each with 1-line explanation, genuine question CTA. No corporate speak. Human, direct, specific.
+Write viral LinkedIn + Facebook posts. Style: short punchy hook (1-2 lines), "Here's [what/how/why]:" line, 3 numbered points each with 1-line explanation, genuine question CTA. Human, direct, specific.
 
 Facebook: same but warmer/shorter.
 hashtags: 10 tags (no # symbol)
@@ -30,8 +31,8 @@ Return ONLY valid JSON:
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 6000,
-    system: 'You are Lara Acosta — a top LinkedIn creator known for viral, human, punchy posts. You always use her exact template style: short hook, "Here\'s X:" line, 3 numbered points with explanations, genuine CTA. Never generic. Never corporate. Return valid JSON only.',
+    max_tokens: 4000,
+    system: 'You are a top LinkedIn creator. Write viral, human, punchy posts. Return valid JSON only.',
     messages: [{ role: 'user', content: prompt }],
   })
 
@@ -54,7 +55,6 @@ Return ONLY valid JSON:
 }
 
 export async function POST(req: NextRequest) {
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   try {
     const body = await req.json() as { profile: CompanyProfile; topics: Topic[] }
     const { profile, topics } = body
@@ -64,22 +64,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No approved topics' }, { status: 400 })
     }
 
-    // Process in batches of 4 (reduced prompt = faster per batch)
-    const batchSize = 4
-    const batches: Topic[][] = []
-    for (let i = 0; i < approvedTopics.length; i += batchSize) {
-      batches.push(approvedTopics.slice(i, i + batchSize))
-    }
-
     const allPosts: Post[] = []
-    for (const batch of batches) {
-      const posts = await generateBatch(profile, batch)
+    for (const topic of approvedTopics) {
+      const posts = await generateBatch(profile, [topic])
       allPosts.push(...posts)
     }
 
     return NextResponse.json({ posts: allPosts })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Post generation failed'
-    return NextResponse.json({ error: message }, { status: 500 })
+    const msg = err instanceof Error ? err.message : 'Post generation failed'
+    console.error('Posts route error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
