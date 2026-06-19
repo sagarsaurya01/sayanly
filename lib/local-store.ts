@@ -40,6 +40,7 @@ export type Graphic = {
   image_url: string
   prompt: string
   structural_prompt?: string
+  slides?: string[]  // carousel slide image URLs (only when graphic_type === 'Carousel')
 }
 
 export type Week = {

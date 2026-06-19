@@ -179,6 +179,52 @@ function PostsTab({ week }: { week: Week }) {
   )
 }
 
+// ── Carousel Viewer ───────────────────────────────────────────────────────────
+
+function CarouselViewer({ slides, title, onDownload }: { slides: string[]; title: string; onDownload: (url: string, name: string) => void }) {
+  const [current, setCurrent] = useState(0)
+  const labels = ['Cover', 'Slide 2', 'Slide 3', 'CTA']
+  return (
+    <div className="relative">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={slides[current]} alt={`${title} — ${labels[current]}`} className="w-full h-full object-cover" />
+      {/* Slide nav */}
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-3 py-2 bg-black/60 backdrop-blur-sm">
+        <button
+          onClick={() => setCurrent((c) => Math.max(0, c - 1))}
+          disabled={current === 0}
+          className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 flex items-center justify-center transition-all"
+        >
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <div className="flex items-center gap-2">
+          {slides.map((_, i) => (
+            <button key={i} onClick={() => setCurrent(i)} className={`transition-all rounded-full ${i === current ? 'w-4 h-1.5 bg-orange-400' : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/60'}`} />
+          ))}
+        </div>
+        <button
+          onClick={() => setCurrent((c) => Math.min(slides.length - 1, c + 1))}
+          disabled={current === slides.length - 1}
+          className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 flex items-center justify-center transition-all"
+        >
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </button>
+      </div>
+      {/* Slide label */}
+      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 text-[10px] text-white/70 font-medium">
+        {labels[current] ?? `Slide ${current + 1}`} · {current + 1}/{slides.length}
+      </div>
+      {/* Download current slide */}
+      <button
+        onClick={() => onDownload(slides[current], `${title.slice(0, 25)}-${labels[current] ?? current + 1}.jpg`)}
+        className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/60 text-[10px] text-white/70 hover:text-white font-medium transition-colors"
+      >
+        ↓ Save slide
+      </button>
+    </div>
+  )
+}
+
 // ── Graphics Tab ─────────────────────────────────────────────────────────────
 
 function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate: (g: Graphic[]) => void }) {
@@ -227,7 +273,7 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
           post,
         }),
       })
-      const data = await res.json() as { image_url?: string; prompt?: string; structural_prompt?: string; error?: string }
+      const data = await res.json() as { image_url?: string; prompt?: string; structural_prompt?: string; slides?: string[]; error?: string }
       if (!res.ok || !data.image_url) {
         setErrors((prev) => ({ ...prev, [topic.id]: data.error ?? 'Image generation failed' }))
         return
@@ -238,6 +284,7 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
         image_url: data.image_url,
         prompt: data.prompt ?? '',
         structural_prompt: data.structural_prompt ?? '',
+        slides: data.slides,
       }
       const updated = [...graphics.filter((g) => g.topic_id !== topic.id), newGraphic]
       setGraphics(updated)
@@ -312,13 +359,17 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
                   </div>
                 )}
                 {graphic && !isLoading && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={graphic.image_url}
-                    alt={topic.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                  />
+                  topic.graphic_type === 'Carousel' && graphic.slides && graphic.slides.length > 1
+                    ? <CarouselViewer slides={graphic.slides} title={topic.title} onDownload={downloadImage} />
+                    : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={graphic.image_url}
+                        alt={topic.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                    )
                 )}
                 {errors[topic.id] && !isLoading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4">
@@ -343,12 +394,19 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium text-white leading-snug">{topic.title}</p>
                   {graphic && (
-                    <button
-                      onClick={() => downloadImage(graphic.image_url, `${topic.title.slice(0, 30)}.jpg`)}
-                      className="btn-ghost text-xs px-3 py-1.5 shrink-0"
-                    >
-                      Download
-                    </button>
+                    topic.graphic_type === 'Carousel' && graphic.slides && graphic.slides.length > 1
+                      ? <button
+                          onClick={() => graphic.slides!.forEach((url, i) => downloadImage(url, `${topic.title.slice(0, 25)}-slide${i + 1}.jpg`))}
+                          className="btn-ghost text-xs px-3 py-1.5 shrink-0"
+                        >
+                          ↓ All slides
+                        </button>
+                      : <button
+                          onClick={() => downloadImage(graphic.image_url, `${topic.title.slice(0, 30)}.jpg`)}
+                          className="btn-ghost text-xs px-3 py-1.5 shrink-0"
+                        >
+                          Download
+                        </button>
                   )}
                 </div>
 
