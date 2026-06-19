@@ -227,7 +227,7 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
           post,
         }),
       })
-      const data = await res.json() as { image_url?: string; prompt?: string; error?: string }
+      const data = await res.json() as { image_url?: string; prompt?: string; structural_prompt?: string; error?: string }
       if (!res.ok || !data.image_url) {
         setErrors((prev) => ({ ...prev, [topic.id]: data.error ?? 'Image generation failed' }))
         return
@@ -237,6 +237,7 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
         platform: topic.best_platform,
         image_url: data.image_url,
         prompt: data.prompt ?? '',
+        structural_prompt: data.structural_prompt ?? '',
       }
       const updated = [...graphics.filter((g) => g.topic_id !== topic.id), newGraphic]
       setGraphics(updated)
@@ -352,7 +353,15 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
                 </div>
 
                 {graphic && (
-                  <div>
+                  <div className="space-y-2">
+                    {/* Graphic type badge */}
+                    {topic.graphic_type && (
+                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border border-purple-500/30 text-purple-300 bg-purple-500/10">
+                        {topic.graphic_type}
+                      </span>
+                    )}
+
+                    {/* Visual prompt */}
                     <button
                       onClick={() => togglePrompt(topic.id)}
                       className="text-xs text-white/30 hover:text-white/50 transition-colors flex items-center gap-1"
@@ -360,12 +369,38 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
                       <svg className={`w-3 h-3 transition-transform ${promptExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                       </svg>
-                      View prompt
+                      View AI image prompt
                     </button>
                     {promptExpanded && (
-                      <p className="mt-2 text-xs text-white/40 leading-relaxed border-l border-white/10 pl-3">
+                      <p className="mt-1 text-xs text-white/40 leading-relaxed border-l border-white/10 pl-3">
                         {graphic.prompt}
                       </p>
+                    )}
+
+                    {/* Structural prompt */}
+                    {graphic.structural_prompt && (
+                      <>
+                        <button
+                          onClick={() => setExpandedPrompts((prev) => {
+                            const next = new Set(prev)
+                            const key = `struct-${topic.id}`
+                            if (next.has(key)) next.delete(key)
+                            else next.add(key)
+                            return next
+                          })}
+                          className="text-xs text-amber-400/50 hover:text-amber-400/80 transition-colors flex items-center gap-1"
+                        >
+                          <svg className={`w-3 h-3 transition-transform ${expandedPrompts.has(`struct-${topic.id}`) ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                          View designer brief
+                        </button>
+                        {expandedPrompts.has(`struct-${topic.id}`) && (
+                          <div className="mt-1 text-xs text-amber-300/60 leading-relaxed border-l-2 border-amber-500/20 pl-3 whitespace-pre-line">
+                            {graphic.structural_prompt}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

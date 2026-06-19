@@ -12,38 +12,69 @@ export async function POST(req: NextRequest) {
   const body = await req.json() as { profile: CompanyProfile; topic: Topic; post: Post }
   const { profile, topic, post } = body
 
-  // Step 1: Claude writes a sharp, creative image prompt
-  const promptRequest = `You are a world-class art director for social media. Create a UNIQUE, visually striking image prompt — NOT a generic stock photo.
+  const graphicType = topic.graphic_type ?? 'Static Graphic'
+
+  // Step 1: Claude writes both visual prompt + structural prompt
+  const promptRequest = `You are a world-class social media art director and graphic designer.
 
 Topic: "${topic.title}"
 Hook: "${post.linkedin.hook}"
-Brand colors: ${profile.brand_colors.primary} and ${profile.brand_colors.secondary}
+Brand colors: ${profile.brand_colors.primary} (primary) and ${profile.brand_colors.secondary} (secondary)
 Industry: ${profile.description}
+Graphic Type: ${graphicType}
 
-Rules:
-- Think like a magazine cover or viral social post — bold, conceptual, unexpected
-- Use a strong VISUAL METAPHOR for the topic (avoid literal "person at laptop" clichés)
-- Incorporate the brand colors as dramatic lighting, gradients, or accent elements
-- Cinematic composition — rule of thirds, strong foreground subject, clean background
-- NO text, NO logos, NO words in the image
-- Pick ONE of these creative styles that fits best: bold flat illustration, cinematic 3D render, dramatic macro photography, surreal conceptual art, or high-contrast graphic design
-- The image must STOP someone mid-scroll
+Generate TWO things:
 
-Write a single punchy prompt of max 3 sentences. Return ONLY the prompt.`
+1. IMAGE_PROMPT: A punchy, visually specific AI image generation prompt (max 3 sentences). Rules:
+- Bold, conceptual, unexpected — NOT generic stock photos
+- Strong visual metaphor for the topic
+- Incorporate brand colors as lighting, gradients, or accents
+- Cinematic composition
+${graphicType === 'Carousel' ? '- Style: Multi-panel flat design with bold typography sections, clean grid layout, brand color backgrounds per slide' : ''}
+${graphicType === 'Infographic' ? '- Style: Data visualization aesthetic, icons, flow charts, bold stats, brand color scheme' : ''}
+${graphicType === 'Cheat Sheet' ? '- Style: Clean structured layout with numbered sections, checklist aesthetic, brand colors as section dividers' : ''}
+${graphicType === 'Static Graphic' ? '- Style: Bold editorial graphic, strong single focal point, magazine cover energy' : ''}
+
+2. STRUCTURAL_PROMPT: A designer brief (5-8 bullet points) describing exact layout for a human or Canva designer:
+- Canvas size and orientation
+- Background color/treatment
+- Text zones (headline, subheadline, body text — positions)
+- Visual elements (icons, shapes, images — positions)
+- Color usage per section
+- Font style guidance
+- ${graphicType === 'Carousel' ? 'Number of slides and what each slide contains' : 'Overall composition flow'}
+
+Return ONLY this JSON, no markdown:
+{"image_prompt":"...","structural_prompt":"..."}`
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 300,
-    system: 'You are a viral social media art director. Write short, punchy, visually specific image prompts that are never generic. Return only the prompt, no explanation.',
+    max_tokens: 800,
+    system: 'You are a social media art director and graphic designer. Return valid JSON only.',
     messages: [{ role: 'user', content: promptRequest }],
   })
 
   const content = message.content[0]
   if (content.type !== 'text') {
-    return NextResponse.json({ error: 'Failed to generate prompt' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to generate prompts' }, { status: 500 })
   }
 
-  const imagePrompt = content.text.trim()
+  let imagePrompt = ''
+  let structuralPrompt = ''
+  try {
+    const parsed = JSON.parse(content.text.trim()) as { image_prompt: string; structural_prompt: string }
+    imagePrompt = parsed.image_prompt
+    structuralPrompt = parsed.structural_prompt
+  } catch {
+    const match = content.text.match(/\{[\s\S]*\}/)
+    if (match) {
+      const parsed = JSON.parse(match[0]) as { image_prompt: string; structural_prompt: string }
+      imagePrompt = parsed.image_prompt
+      structuralPrompt = parsed.structural_prompt
+    } else {
+      imagePrompt = content.text.trim()
+    }
+  }
 
   // Step 2: gpt-image-1 generates the image
   try {
@@ -56,7 +87,7 @@ Write a single punchy prompt of max 3 sentences. Return ONLY the prompt.`
     const imageData = image.data?.[0]
     if (!imageData) throw new Error('No image data returned')
     const image_url = imageData.url ?? `data:image/png;base64,${imageData.b64_json}`
-    return NextResponse.json({ image_url, prompt: imagePrompt })
+    return NextResponse.json({ image_url, prompt: imagePrompt, structural_prompt: structuralPrompt })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Image generation failed'
     return NextResponse.json({ error: msg }, { status: 500 })

@@ -39,6 +39,7 @@ export type Graphic = {
   platform: string
   image_url: string
   prompt: string
+  structural_prompt?: string
 }
 
 export type Week = {
