@@ -1,7 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import type { CompanyProfile, Topic } from '@/lib/local-store'
+import type { CompanyProfile, Topic, GraphicType } from '@/lib/local-store'
 import { getAllWeeks } from '@/lib/local-store'
+
+const GRAPHIC_TYPES: GraphicType[] = ['Carousel', 'Infographic', 'Cheat Sheet', 'Static Graphic']
+
+function assignGraphicTypes(topics: Topic[]): Topic[] {
+  let lastType: GraphicType | null = null
+  return topics.map((topic) => {
+    const available = GRAPHIC_TYPES.filter((t) => t !== lastType)
+    // Pick based on format hint, otherwise rotate
+    let picked: GraphicType
+    if (topic.format === 'List' || topic.format === 'Tips') picked = available.includes('Carousel') ? 'Carousel' : available[0]
+    else if (topic.format === 'Stat' || topic.format === 'Data') picked = available.includes('Infographic') ? 'Infographic' : available[0]
+    else if (topic.format === 'Guide' || topic.format === 'How-to') picked = available.includes('Cheat Sheet') ? 'Cheat Sheet' : available[0]
+    else picked = available[Math.floor(Math.random() * available.length)]
+    // ensure no repeat
+    if (picked === lastType) picked = available.find((t) => t !== lastType) ?? available[0]
+    lastType = picked
+    return { ...topic, graphic_type: picked }
+  })
+}
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -88,7 +107,7 @@ Return ONLY this JSON, no markdown:
       }
     }
 
-    return NextResponse.json({ topics })
+    return NextResponse.json({ topics: assignGraphicTypes(topics) })
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error'

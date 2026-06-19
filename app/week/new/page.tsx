@@ -22,6 +22,20 @@ const PLATFORM_COLORS: Record<string, string> = {
   Facebook: 'platform-facebook',
 }
 
+const GRAPHIC_TYPE_STYLES: Record<string, string> = {
+  'Carousel':       'border-purple-500/30 text-purple-300 bg-purple-500/10',
+  'Infographic':    'border-blue-500/30 text-blue-300 bg-blue-500/10',
+  'Cheat Sheet':    'border-emerald-500/30 text-emerald-300 bg-emerald-500/10',
+  'Static Graphic': 'border-amber-500/30 text-amber-300 bg-amber-500/10',
+}
+
+const GRAPHIC_TYPE_ICONS: Record<string, string> = {
+  'Carousel':       '🎠',
+  'Infographic':    '📊',
+  'Cheat Sheet':    '📋',
+  'Static Graphic': '🖼️',
+}
+
 export default function NewWeekPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
@@ -197,6 +211,7 @@ export default function NewWeekPage() {
       reasoning: 'Custom topic added by you — posts will be written to match your company profile.',
       best_platform: 'LinkedIn',
       format: 'Custom',
+      graphic_type: 'Static Graphic',
       approved: true,
     }
     setTopics((prev) => [...prev, newTopic])
@@ -451,13 +466,18 @@ export default function NewWeekPage() {
                         onChange={(e) => updateTitle(topic.id, e.target.value)}
                       />
                       <p className="text-white/50 text-sm mt-1 leading-relaxed">{topic.reasoning}</p>
-                      <div className="flex items-center gap-2 mt-3">
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${PLATFORM_COLORS[topic.best_platform] ?? 'border-white/10 text-white/40'}`}>
                           {topic.best_platform}
                         </span>
                         <span className="px-2.5 py-1 rounded-full text-xs font-medium border border-white/[0.07] text-white/40">
                           {topic.format}
                         </span>
+                        {topic.graphic_type && (
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${GRAPHIC_TYPE_STYLES[topic.graphic_type] ?? 'border-white/10 text-white/40'}`}>
+                            {GRAPHIC_TYPE_ICONS[topic.graphic_type]} {topic.graphic_type}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <button

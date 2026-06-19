@@ -16,12 +16,15 @@ export type CompanyProfile = {
   created_at: string
 }
 
+export type GraphicType = 'Carousel' | 'Infographic' | 'Cheat Sheet' | 'Static Graphic'
+
 export type Topic = {
   id: string
   title: string
   reasoning: string
   best_platform: string
   format: string
+  graphic_type: GraphicType
   approved: boolean
 }
 
