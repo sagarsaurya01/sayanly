@@ -40,7 +40,10 @@ export async function POST(req: NextRequest) {
     try {
       const tavilyRes = await fetch('https://api.tavily.com/search', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.TAVILY_API_KEY ?? '' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.TAVILY_API_KEY ?? ''}`,
+        },
         body: JSON.stringify({
           query: `${profile.description} LinkedIn content trends ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}`,
           max_results: 5,
