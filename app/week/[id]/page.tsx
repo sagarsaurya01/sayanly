@@ -329,11 +329,11 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
         <button
           onClick={generateAll}
           disabled={loadingIds.size > 0}
-          className="btn-primary"
+          className="btn-primary whitespace-nowrap"
         >
           {loadingIds.size > 0 ? (
             <>
-              <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin shrink-0" />
               Generating ({loadingIds.size} remaining)…
             </>
           ) : (
