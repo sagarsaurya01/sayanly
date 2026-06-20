@@ -391,6 +391,10 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
 
               {/* Card footer */}
               <div className="p-4 space-y-3">
+                {/* Graphic type badge — always visible */}
+                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border border-purple-500/30 text-purple-300 bg-purple-500/10">
+                  {topic.graphic_type ?? 'Static Graphic'}
+                </span>
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium text-white leading-snug">{topic.title}</p>
                   {graphic && (
