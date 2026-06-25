@@ -9,7 +9,7 @@ export type CompanyProfile = {
   description: string
   target_audience: string
   tone: 'professional' | 'casual' | 'inspirational' | 'educational' | 'bold'
-  brand_colors: { primary: string; secondary: string }
+  brand_colors: { primary: string; secondary: string; palette?: string[] }
   platforms: ('linkedin' | 'facebook')[]
   past_posts?: string
   competitor_posts?: string

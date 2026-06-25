@@ -161,42 +161,67 @@ export default function ProfilePage() {
 
           {/* Brand Colors */}
           <div className="glass rounded-xl p-6 space-y-4">
-            <h2 className="font-semibold text-white/80 text-sm uppercase tracking-widest">Brand Colors</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-white/80 text-sm uppercase tracking-widest">Brand Colors</h2>
+              <span className="text-xs text-white/30">Up to 6 colors</span>
+            </div>
+            {/* Primary + Secondary */}
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block text-xs text-white/50 mb-1.5">Primary Color</label>
+                <label className="block text-xs text-white/50 mb-1.5">Primary</label>
                 <div className="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    value={form.brand_colors.primary}
+                  <input type="color" value={form.brand_colors.primary}
                     onChange={(e) => setForm((p) => ({ ...p, brand_colors: { ...p.brand_colors, primary: e.target.value } }))}
-                    className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-transparent"
-                  />
-                  <input
-                    className="input-glass"
-                    value={form.brand_colors.primary}
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-transparent" />
+                  <input className="input-glass" value={form.brand_colors.primary}
                     onChange={(e) => setForm((p) => ({ ...p, brand_colors: { ...p.brand_colors, primary: e.target.value } }))}
-                    placeholder="#ff6b35"
-                  />
+                    placeholder="#ff6b35" />
                 </div>
               </div>
               <div className="flex-1">
-                <label className="block text-xs text-white/50 mb-1.5">Secondary Color</label>
+                <label className="block text-xs text-white/50 mb-1.5">Secondary</label>
                 <div className="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    value={form.brand_colors.secondary}
+                  <input type="color" value={form.brand_colors.secondary}
                     onChange={(e) => setForm((p) => ({ ...p, brand_colors: { ...p.brand_colors, secondary: e.target.value } }))}
-                    className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-transparent"
-                  />
-                  <input
-                    className="input-glass"
-                    value={form.brand_colors.secondary}
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-transparent" />
+                  <input className="input-glass" value={form.brand_colors.secondary}
                     onChange={(e) => setForm((p) => ({ ...p, brand_colors: { ...p.brand_colors, secondary: e.target.value } }))}
-                    placeholder="#e8551f"
-                  />
+                    placeholder="#e8551f" />
                 </div>
               </div>
+            </div>
+            {/* Palette: 4 extra colors */}
+            <div>
+              <label className="block text-xs text-white/50 mb-2">Additional Brand Colors (optional)</label>
+              <div className="grid grid-cols-2 gap-3">
+                {[0, 1, 2, 3].map((i) => {
+                  const val = form.brand_colors.palette?.[i] ?? ''
+                  return (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input type="color" value={val || '#ffffff'}
+                        onChange={(e) => {
+                          const palette = [...(form.brand_colors.palette ?? ['', '', '', ''])]
+                          palette[i] = e.target.value
+                          setForm((p) => ({ ...p, brand_colors: { ...p.brand_colors, palette } }))
+                        }}
+                        className="w-9 h-9 rounded-lg cursor-pointer border border-white/10 bg-transparent shrink-0" />
+                      <input className="input-glass text-sm" value={val}
+                        onChange={(e) => {
+                          const palette = [...(form.brand_colors.palette ?? ['', '', '', ''])]
+                          palette[i] = e.target.value
+                          setForm((p) => ({ ...p, brand_colors: { ...p.brand_colors, palette } }))
+                        }}
+                        placeholder={`Color ${i + 3}`} />
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            {/* Live preview */}
+            <div className="flex gap-2 pt-1">
+              {[form.brand_colors.primary, form.brand_colors.secondary, ...(form.brand_colors.palette ?? [])].filter(Boolean).map((c, i) => (
+                <div key={i} className="w-8 h-8 rounded-full border border-white/10 shrink-0" style={{ backgroundColor: c }} title={c} />
+              ))}
             </div>
           </div>
 

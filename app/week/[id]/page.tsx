@@ -227,12 +227,16 @@ function CarouselViewer({ slides, title, onDownload }: { slides: string[]; title
 
 // ── Graphics Tab ─────────────────────────────────────────────────────────────
 
+type PromptResult = { isCarousel: boolean; slide_prompts?: string[]; image_prompt?: string; structural_prompt?: string }
+
 function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate: (g: Graphic[]) => void }) {
   const [graphics, setGraphics] = useState<Graphic[]>(week.graphics ?? [])
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set())
   const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set())
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
+  const [promptsModal, setPromptsModal] = useState<{ topic: Topic; result: PromptResult } | null>(null)
+  const [promptLoadingIds, setPromptLoadingIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetch('/api/profile')
@@ -310,6 +314,26 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
   async function generateAll() {
     for (const topic of week.topics) {
       await generateGraphic(topic)
+    }
+  }
+
+  async function generatePrompts(topic: Topic) {
+    const post = week.posts.find((p) => p.topic_id === topic.id)
+    if (!post || !profile) return
+    setPromptLoadingIds((prev) => new Set([...prev, topic.id]))
+    try {
+      const res = await fetch('/api/graphics-prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile, topic, post }),
+      })
+      const data = await res.json() as PromptResult & { error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      setPromptsModal({ topic, result: data })
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Prompt generation failed')
+    } finally {
+      setPromptLoadingIds((prev) => { const next = new Set(prev); next.delete(topic.id); return next })
     }
   }
 
@@ -475,11 +499,60 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
                     {errors[topic.id] ? 'Retry Generation' : 'Generate This Graphic'}
                   </button>
                 )}
+                <button
+                  onClick={() => generatePrompts(topic)}
+                  disabled={promptLoadingIds.has(topic.id)}
+                  className="btn-ghost w-full text-xs text-purple-400 hover:text-purple-300 border-purple-500/20 hover:border-purple-500/40 disabled:opacity-50"
+                >
+                  {promptLoadingIds.has(topic.id) ? '⏳ Generating prompts…' : '📋 Get Prompts Only'}
+                </button>
               </div>
             </div>
           )
         })}
       </div>
+
+      {/* Prompts Modal */}
+      {promptsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setPromptsModal(null)}>
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-bold text-white text-lg">📋 Graphic Prompts</h3>
+              <button onClick={() => setPromptsModal(null)} className="text-white/40 hover:text-white text-xl">✕</button>
+            </div>
+            <p className="text-xs text-white/40 mb-4">{promptsModal.topic.title}</p>
+
+            {promptsModal.result.isCarousel && promptsModal.result.slide_prompts ? (
+              <div className="space-y-3 mb-5">
+                {(['Cover Slide', 'Slide 2', 'Slide 3', 'CTA Slide'] as const).map((label, i) => (
+                  <div key={i} className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
+                    <p className="text-xs font-bold text-purple-400 mb-2">{label}</p>
+                    <p className="text-sm text-white/80 leading-relaxed">{promptsModal.result.slide_prompts![i]}</p>
+                    <button onClick={() => navigator.clipboard.writeText(promptsModal.result.slide_prompts![i]).then(() => toast.success('Copied!'))}
+                      className="text-xs text-white/30 hover:text-white mt-2">Copy ↗</button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4 mb-5">
+                <p className="text-xs font-bold text-purple-400 mb-2">Image Prompt</p>
+                <p className="text-sm text-white/80 leading-relaxed">{promptsModal.result.image_prompt}</p>
+                <button onClick={() => navigator.clipboard.writeText(promptsModal.result.image_prompt ?? '').then(() => toast.success('Copied!'))}
+                  className="text-xs text-white/30 hover:text-white mt-2">Copy ↗</button>
+              </div>
+            )}
+
+            {promptsModal.result.structural_prompt && (
+              <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
+                <p className="text-xs font-bold text-amber-400 mb-2">Structural Designer Brief</p>
+                <p className="text-sm text-white/70 leading-relaxed whitespace-pre-line">{promptsModal.result.structural_prompt}</p>
+                <button onClick={() => navigator.clipboard.writeText(promptsModal.result.structural_prompt ?? '').then(() => toast.success('Copied!'))}
+                  className="text-xs text-white/30 hover:text-white mt-2">Copy ↗</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
