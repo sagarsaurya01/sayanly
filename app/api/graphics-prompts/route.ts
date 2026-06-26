@@ -11,6 +11,14 @@ const CAROUSEL_SLIDES = [
   { label: 'CTA Slide', instruction: 'Final call-to-action slide. Bold CTA text, brand colors, clean minimal layout. Encourage engagement.' },
 ]
 
+function safeParseJSON(text: string): Record<string, unknown> | null {
+  const stripped = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+  try { return JSON.parse(stripped) } catch { /* ignore */ }
+  const match = stripped.match(/\{[\s\S]*\}/)
+  if (!match) return null
+  try { return JSON.parse(match[0]) } catch { return null }
+}
+
 export async function POST(req: NextRequest) {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const body = await req.json() as { profile: CompanyProfile; topic: Topic; post: Post }
@@ -22,6 +30,7 @@ export async function POST(req: NextRequest) {
 
   const graphicType = topic.graphic_type ?? 'Static Graphic'
   const isCarousel = graphicType === 'Carousel'
+  const hook = post?.linkedin?.hook ?? ''
 
   const allColors = [
     profile.brand_colors.primary,
@@ -30,91 +39,78 @@ export async function POST(req: NextRequest) {
   ]
   const colorList = allColors.join(', ')
 
-  const hook = post?.linkedin?.hook ?? ''
-
-  const promptRequest = `You are a world-class social media art director and graphic designer.
+  const promptRequest = isCarousel
+    ? `You are a social media art director. Generate FOUR image prompts for a LinkedIn carousel post.
 
 Topic: "${topic.title}"
-Hook: "${hook}"
 Brand colors: ${colorList}
 Industry: ${profile.description}
-Graphic Type: ${graphicType}
 
-${isCarousel ? `Generate FOUR slide image prompts for a carousel post, plus a structural brief.
-
-Each slide prompt must be visually distinct but use the same brand colors and design language.
 Slides:
 1. Cover: ${CAROUSEL_SLIDES[0].instruction}
 2. Slide 2: ${CAROUSEL_SLIDES[1].instruction}
 3. Slide 3: ${CAROUSEL_SLIDES[2].instruction}
 4. CTA: ${CAROUSEL_SLIDES[3].instruction}
 
-Return ONLY a valid JSON array with exactly 4 strings, one prompt per slide:
-["cover prompt here","slide 2 prompt here","slide 3 prompt here","cta prompt here"]`
-: `Generate ONE detailed image prompt and a structural designer brief.
+Return ONLY a JSON array with exactly 4 strings. No markdown, no explanation:
+["cover prompt","slide 2 prompt","slide 3 prompt","cta prompt"]`
+    : `You are a social media art director. Generate ONE image prompt for a ${graphicType}.
 
-Image prompt rules:
-- Bold, conceptual, unexpected — NOT generic stock photos
-- Strong visual metaphor for the topic
-- Incorporate brand colors (${colorList}) as lighting, gradients, or accents
+Topic: "${topic.title}"
+Hook: "${hook}"
+Brand colors: ${colorList}
+Industry: ${profile.description}
+
+Rules:
+- Bold, conceptual visual metaphor — NOT generic stock photos
+- Incorporate brand colors as lighting or accents
 - Cinematic composition
-${graphicType === 'Infographic' ? '- Style: Data visualization, icons, flow charts, bold stats, brand color scheme' : ''}
-${graphicType === 'Cheat Sheet' ? '- Style: Clean structured layout, numbered sections, checklist aesthetic, brand colors as section dividers' : ''}
-${graphicType === 'Static Graphic' ? '- Style: Bold editorial graphic, strong single focal point, magazine cover energy' : ''}
+${graphicType === 'Infographic' ? '- Data visualization, icons, bold stats style' : ''}
+${graphicType === 'Cheat Sheet' ? '- Clean structured layout, numbered sections' : ''}
+${graphicType === 'Static Graphic' ? '- Bold editorial graphic, magazine cover energy' : ''}
 
-Structural brief: 5-8 bullet points covering canvas size, background, text zones, visual elements, color usage, font style.
-
-Return ONLY this JSON:
-{"image_prompt":"...","structural_prompt":"..."}`}`
+Return ONLY this JSON, no markdown:
+{"image_prompt":"...","structural_prompt":"5-8 bullet design brief"}`
 
   try {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1200,
-      system: 'You are a social media art director. Return valid JSON only, no markdown.',
+      system: 'You are a social media art director. Return only valid JSON, no markdown, no explanation.',
       messages: [{ role: 'user', content: promptRequest }],
     })
 
     const content = message.content[0]
     if (content.type !== 'text') {
-      return NextResponse.json({ error: 'Failed to generate prompts' }, { status: 500 })
+      return NextResponse.json({ error: 'No text response from AI' }, { status: 500 })
     }
 
-    const stripped = content.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+    const raw = content.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
 
-    // Carousel returns a plain JSON array
     if (isCarousel) {
+      const arrMatch = raw.match(/\[[\s\S]*\]/)
+      if (!arrMatch) {
+        return NextResponse.json({ error: 'Failed to parse carousel prompts', raw: raw.slice(0, 300) }, { status: 500 })
+      }
       let slidePrompts: string[] = []
       try {
-        const arrMatch = stripped.match(/\[[\s\S]*\]/)
-        if (arrMatch) slidePrompts = JSON.parse(arrMatch[0]) as string[]
+        slidePrompts = JSON.parse(arrMatch[0]) as string[]
       } catch {
-        return NextResponse.json({ error: 'Failed to parse carousel prompts', raw: stripped.slice(0, 300) }, { status: 500 })
+        return NextResponse.json({ error: 'Failed to parse carousel JSON', raw: raw.slice(0, 300) }, { status: 500 })
       }
-      if (!slidePrompts.length) {
-        return NextResponse.json({ error: 'No slide prompts returned', raw: stripped.slice(0, 300) }, { status: 500 })
-      }
-      return NextResponse.json({
-        isCarousel: true,
-        slide_prompts: slidePrompts,
-        structural_prompt: '',
-      })
-    // Static graphic — parse object
-    let parsed: Record<string, unknown>
-    try {
-      parsed = JSON.parse(stripped)
-    } catch {
-      const match = stripped.match(/\{[\s\S]*\}/)
-      if (!match) return NextResponse.json({ error: 'Failed to parse AI response', raw: stripped.slice(0, 300) }, { status: 500 })
-      try { parsed = JSON.parse(match[0]) } catch {
-        return NextResponse.json({ error: 'Failed to parse AI response', raw: stripped.slice(0, 300) }, { status: 500 })
-      }
+      return NextResponse.json({ isCarousel: true, slide_prompts: slidePrompts, structural_prompt: '' })
+    }
+
+    const parsed = safeParseJSON(raw)
+    if (!parsed) {
+      return NextResponse.json({ error: 'Failed to parse AI response', raw: raw.slice(0, 300) }, { status: 500 })
     }
     return NextResponse.json({
       isCarousel: false,
       image_prompt: parsed.image_prompt as string,
       structural_prompt: parsed.structural_prompt as string,
     })
+
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Prompt generation failed'
     return NextResponse.json({ error: msg }, { status: 500 })
