@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   ]
   const colorList = allColors.join(', ')
 
-  const hook = post?.linkedin?.hook ?? post?.linkedin_hook ?? ''
+  const hook = post?.linkedin?.hook ?? ''
 
   const promptRequest = `You are a world-class social media art director and graphic designer.
 
