@@ -16,6 +16,10 @@ export async function POST(req: NextRequest) {
   const body = await req.json() as { profile: CompanyProfile; topic: Topic; post: Post }
   const { profile, topic, post } = body
 
+  if (!topic || !profile) {
+    return NextResponse.json({ error: 'Missing topic or profile' }, { status: 400 })
+  }
+
   const graphicType = topic.graphic_type ?? 'Static Graphic'
   const isCarousel = graphicType === 'Carousel'
 
@@ -26,10 +30,12 @@ export async function POST(req: NextRequest) {
   ]
   const colorList = allColors.join(', ')
 
+  const hook = post?.linkedin?.hook ?? post?.linkedin_hook ?? ''
+
   const promptRequest = `You are a world-class social media art director and graphic designer.
 
 Topic: "${topic.title}"
-Hook: "${post.linkedin.hook}"
+Hook: "${hook}"
 Brand colors: ${colorList}
 Industry: ${profile.description}
 Graphic Type: ${graphicType}
