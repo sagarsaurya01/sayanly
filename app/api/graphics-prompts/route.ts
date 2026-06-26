@@ -78,9 +78,19 @@ Return ONLY this JSON:
     try {
       parsed = JSON.parse(content.text.trim())
     } catch {
-      const match = content.text.match(/\{[\s\S]*\}/)
-      if (!match) return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
-      parsed = JSON.parse(match[0])
+      // Strip markdown code fences if present
+      const stripped = content.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+      try {
+        parsed = JSON.parse(stripped)
+      } catch {
+        const match = stripped.match(/\{[\s\S]*\}/)
+        if (!match) return NextResponse.json({ error: 'Failed to parse AI response', raw: content.text.slice(0, 300) }, { status: 500 })
+        try {
+          parsed = JSON.parse(match[0])
+        } catch {
+          return NextResponse.json({ error: 'Failed to parse AI response', raw: content.text.slice(0, 300) }, { status: 500 })
+        }
+      }
     }
 
     if (isCarousel) {
