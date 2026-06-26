@@ -49,8 +49,8 @@ Slides:
 3. Slide 3: ${CAROUSEL_SLIDES[2].instruction}
 4. CTA: ${CAROUSEL_SLIDES[3].instruction}
 
-Return ONLY this JSON:
-{"slide_prompts":["cover prompt","slide2 prompt","slide3 prompt","cta prompt"],"structural_prompt":"designer brief with slide-by-slide breakdown..."}`
+Return ONLY a valid JSON array with exactly 4 strings, one prompt per slide:
+["cover prompt here","slide 2 prompt here","slide 3 prompt here","cta prompt here"]`
 : `Generate ONE detailed image prompt and a structural designer brief.
 
 Image prompt rules:
@@ -80,38 +80,41 @@ Return ONLY this JSON:
       return NextResponse.json({ error: 'Failed to generate prompts' }, { status: 500 })
     }
 
-    let parsed: Record<string, unknown>
-    try {
-      parsed = JSON.parse(content.text.trim())
-    } catch {
-      // Strip markdown code fences if present
-      const stripped = content.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
-      try {
-        parsed = JSON.parse(stripped)
-      } catch {
-        const match = stripped.match(/\{[\s\S]*\}/)
-        if (!match) return NextResponse.json({ error: 'Failed to parse AI response', raw: content.text.slice(0, 300) }, { status: 500 })
-        try {
-          parsed = JSON.parse(match[0])
-        } catch {
-          return NextResponse.json({ error: 'Failed to parse AI response', raw: content.text.slice(0, 300) }, { status: 500 })
-        }
-      }
-    }
+    const stripped = content.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
 
+    // Carousel returns a plain JSON array
     if (isCarousel) {
+      let slidePrompts: string[] = []
+      try {
+        const arrMatch = stripped.match(/\[[\s\S]*\]/)
+        if (arrMatch) slidePrompts = JSON.parse(arrMatch[0]) as string[]
+      } catch {
+        return NextResponse.json({ error: 'Failed to parse carousel prompts', raw: stripped.slice(0, 300) }, { status: 500 })
+      }
+      if (!slidePrompts.length) {
+        return NextResponse.json({ error: 'No slide prompts returned', raw: stripped.slice(0, 300) }, { status: 500 })
+      }
       return NextResponse.json({
         isCarousel: true,
-        slide_prompts: parsed.slide_prompts as string[],
-        structural_prompt: parsed.structural_prompt as string,
+        slide_prompts: slidePrompts,
+        structural_prompt: '',
       })
-    } else {
-      return NextResponse.json({
-        isCarousel: false,
-        image_prompt: parsed.image_prompt as string,
-        structural_prompt: parsed.structural_prompt as string,
-      })
+    // Static graphic — parse object
+    let parsed: Record<string, unknown>
+    try {
+      parsed = JSON.parse(stripped)
+    } catch {
+      const match = stripped.match(/\{[\s\S]*\}/)
+      if (!match) return NextResponse.json({ error: 'Failed to parse AI response', raw: stripped.slice(0, 300) }, { status: 500 })
+      try { parsed = JSON.parse(match[0]) } catch {
+        return NextResponse.json({ error: 'Failed to parse AI response', raw: stripped.slice(0, 300) }, { status: 500 })
+      }
     }
+    return NextResponse.json({
+      isCarousel: false,
+      image_prompt: parsed.image_prompt as string,
+      structural_prompt: parsed.structural_prompt as string,
+    })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Prompt generation failed'
     return NextResponse.json({ error: msg }, { status: 500 })
