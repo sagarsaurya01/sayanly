@@ -20,7 +20,7 @@ async function generateWithFlux(prompt: string): Promise<string> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'black-forest-labs/flux-2-klein-4b',
+      model: 'black-forest-labs/flux.2-klein-4b',
       prompt,
       aspect_ratio: '1:1',
     }),
