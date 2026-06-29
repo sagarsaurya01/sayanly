@@ -13,20 +13,43 @@ async function generateBatch(profile: CompanyProfile, topics: Topic[]): Promise<
     .map((t, i) => `${i + 1}. [ID: ${t.id}] ${t.title} (Platform: ${t.best_platform}, Format: ${t.format})`)
     .join('\n')
 
-  const prompt = `Company: ${profile.name}
+  const prompt = `You are a top LinkedIn creator writing for:
+Company: ${profile.name}
 Audience: ${profile.target_audience}
 Tone: ${profile.tone}
 
-Topics:
+Topics to write posts for:
 ${topicList}
 
-Write viral LinkedIn + Facebook posts. Style: short punchy hook (1-2 lines), "Here's [what/how/why]:" line, 3 numbered points each with 1-line explanation, genuine question CTA. Human, direct, specific.
+WRITING STYLE — follow these rules exactly:
 
-Facebook: same but warmer/shorter.
-hashtags: 10 tags (no # symbol)
-first_comment: follow-up insight + 8 niche hashtags
+STRUCTURE:
+1. Hook: 1 bold contrarian or surprising statement. Max 10 words. No fluff.
+2. Bridge: 1-2 lines that set up what follows. End with "Here's [what/how/why]:" OR a colon line.
+3. Body: Either numbered steps (1- 2- 3-) OR arrow bullets (→) — never both. Each point = 1-2 lines max. Add a blank line between every point.
+4. Micro-punchline: 1-line bold insight after the body. Use plain text, no formatting symbols.
+5. Close: Either a genuine question ("So tell me honestly: ...") OR a repost ask OR a link CTA.
 
-Return ONLY valid JSON:
+FORMAT RULES:
+- White space everywhere. Never more than 2 lines in a row without a break.
+- Short sentences. One idea per line.
+- Personal voice — use "I", "you", "we". Never corporate.
+- Contrast framing works well: old vs new, left vs right, surface vs deep.
+- Numbers in hooks should be specific (not "a few" — say "11 months", "4 mins", "12,000").
+- NO emojis except sparingly at the very end if needed.
+- NO generic closings like "What do you think?" — make the question specific to the topic.
+
+EXAMPLES OF GOOD HOOKS:
+- "You spent a year getting good at the wrong corner."
+- "Using AI to comment is the worst LinkedIn advice."
+- "AI is making people worse at communicating."
+- "Everyone's waiting for the day AI takes over. It already has."
+
+Facebook: same structure but 20% shorter and slightly warmer tone.
+hashtags: 10 relevant tags (no # symbol)
+first_comment: 1 follow-up insight that adds value + 8 niche hashtags
+
+Return ONLY valid JSON, no markdown:
 {"posts":[{"topic_id":"EXACT_ID","linkedin":{"hook":"","body":"","cta":"","hashtags":[],"first_comment":""},"facebook":{"hook":"","body":"","cta":"","hashtags":[],"first_comment":""}}]}`
 
   const message = await anthropic.messages.create({
