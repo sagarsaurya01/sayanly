@@ -4,7 +4,7 @@ import OpenAI from 'openai'
 import type { CompanyProfile, Topic, Post } from '@/lib/local-store'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60
+export const maxDuration = 300
 
 const CAROUSEL_SLIDES = [
   { label: 'Cover Slide', instruction: 'Bold cover slide with topic title as headline, strong visual hook, brand color background. Large text, minimal content.' },
@@ -102,7 +102,10 @@ Return ONLY this JSON, no markdown:
       if (!arrMatch) return NextResponse.json({ error: 'Failed to parse carousel prompts' }, { status: 500 })
       const slidePrompts = JSON.parse(arrMatch[0]) as string[]
 
-      const slideUrls = await Promise.all(slidePrompts.map((p) => generateWithOpenAI(p)))
+      const slideUrls: string[] = []
+      for (const p of slidePrompts) {
+        slideUrls.push(await generateWithOpenAI(p))
+      }
       return NextResponse.json({
         image_url: slideUrls[0],
         slides: slideUrls,
