@@ -16,7 +16,7 @@ const CAROUSEL_SLIDES = [
 async function generateWithOpenAI(prompt: string): Promise<string> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const image = await openai.images.generate({
-    model: 'dall-e-3',
+    model: 'gpt-image-1-mini',
     prompt,
     size: '1024x1024',
     n: 1,
