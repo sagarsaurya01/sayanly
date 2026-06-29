@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import type { CompanyProfile, Topic, Post } from '@/lib/local-store'
 
 export const dynamic = 'force-dynamic'
@@ -12,27 +13,17 @@ const CAROUSEL_SLIDES = [
   { label: 'CTA Slide', instruction: 'Final call-to-action slide. Bold CTA text, brand colors, clean minimal layout. Encourage engagement.' },
 ]
 
-async function generateWithFlux(prompt: string): Promise<string> {
-  const res = await fetch('https://openrouter.ai/api/v1/images', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'black-forest-labs/flux.2-klein-4b',
-      prompt,
-      aspect_ratio: '1:1',
-    }),
+async function generateWithOpenAI(prompt: string): Promise<string> {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  const image = await openai.images.generate({
+    model: 'dall-e-3',
+    prompt,
+    size: '1024x1024',
+    n: 1,
   })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`OpenRouter image error: ${err.slice(0, 200)}`)
-  }
-  const data = await res.json() as { data?: Array<{ url?: string; b64_json?: string }> }
-  const img = data.data?.[0]
-  if (!img) throw new Error('No image returned from OpenRouter')
-  return img.url ?? `data:image/png;base64,${img.b64_json}`
+  const imageData = image.data?.[0]
+  if (!imageData) throw new Error('No image data returned')
+  return imageData.url ?? `data:image/png;base64,${imageData.b64_json}`
 }
 
 function safeParseJSON(text: string): Record<string, unknown> | null {
@@ -111,7 +102,7 @@ Return ONLY this JSON, no markdown:
       if (!arrMatch) return NextResponse.json({ error: 'Failed to parse carousel prompts' }, { status: 500 })
       const slidePrompts = JSON.parse(arrMatch[0]) as string[]
 
-      const slideUrls = await Promise.all(slidePrompts.map((p) => generateWithFlux(p)))
+      const slideUrls = await Promise.all(slidePrompts.map((p) => generateWithOpenAI(p)))
       return NextResponse.json({
         image_url: slideUrls[0],
         slides: slideUrls,
@@ -122,7 +113,7 @@ Return ONLY this JSON, no markdown:
       const parsed = safeParseJSON(raw)
       if (!parsed) return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
       const imagePrompt = parsed.image_prompt as string
-      const image_url = await generateWithFlux(imagePrompt)
+      const image_url = await generateWithOpenAI(imagePrompt)
       return NextResponse.json({ image_url, prompt: imagePrompt, structural_prompt: parsed.structural_prompt as string })
     }
   } catch (err: unknown) {
