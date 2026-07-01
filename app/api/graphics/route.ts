@@ -27,7 +27,7 @@ async function screenshotHtml(html: string): Promise<string> {
   })
   const page = await browser.newPage()
   await page.setViewport({ width: 1080, height: 1350 })
-  await page.setContent(html, { waitUntil: 'networkidle0' })
+  await page.setContent(html, { waitUntil: 'load' })
   const buffer = await page.screenshot({ type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1350 } })
   await browser.close()
   return `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`
