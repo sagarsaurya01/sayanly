@@ -18,7 +18,8 @@ async function generateWithOpenAI(prompt: string): Promise<string> {
   const image = await openai.images.generate({
     model: 'gpt-image-2',
     prompt,
-    size: '1024x1024',
+    size: '1024x1536',
+    quality: 'high',
     n: 1,
   })
   const imageData = image.data?.[0]
