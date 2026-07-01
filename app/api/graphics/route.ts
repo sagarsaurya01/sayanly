@@ -99,14 +99,20 @@ Return ONLY this JSON, no markdown:
       if (!arrMatch) return NextResponse.json({ error: 'Failed to parse carousel prompts' }, { status: 500 })
       const slidePrompts = JSON.parse(arrMatch[0]) as string[]
 
-      const slideUrls: string[] = []
-      for (const p of slidePrompts) {
-        slideUrls.push(await generateImage(p))
-      }
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+      const combinedPrompt = slidePrompts.join('\n\n')
+      const result = await openai.images.generate({
+        model: 'gpt-image-2',
+        prompt: combinedPrompt,
+        size: '1024x1536',
+        quality: 'high',
+        n: 4,
+      })
+      const slideUrls = (result.data ?? []).map(d => d.url ?? `data:image/png;base64,${d.b64_json}`)
       return NextResponse.json({
         image_url: slideUrls[0],
         slides: slideUrls,
-        prompt: slidePrompts.join(' | '),
+        prompt: combinedPrompt,
         structural_prompt: '',
       })
     } else {
