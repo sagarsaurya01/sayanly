@@ -35,13 +35,15 @@ async function screenshotHtml(html: string): Promise<string> {
 
 function buildCheatSheetHtml(bgUrl: string, title: string, rules: { num: number; heading: string; desc: string; color: string }[], brandColors: string[]): string {
   const cards = rules.map(r => `
-    <div style="background:rgba(0,0,0,0.55);border:1px solid ${r.color}44;border-radius:12px;padding:18px 20px;backdrop-filter:blur(6px);">
-      <div style="width:28px;height:28px;border-radius:50%;background:${r.color};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#000;margin-bottom:10px;">${r.num}</div>
-      <div style="font-size:15px;font-weight:700;color:${r.color};margin-bottom:6px;line-height:1.3;">${r.heading}</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.6;">${r.desc}</div>
+    <div style="background:rgba(10,10,20,0.72);border-left:3px solid ${r.color};border-radius:0 10px 10px 0;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;">
+      <div style="min-width:32px;height:32px;border-radius:50%;background:${r.color};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;flex-shrink:0;">${r.num}</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:5px;line-height:1.25;">${r.heading}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.65);line-height:1.55;">${r.desc}</div>
+      </div>
     </div>`).join('')
 
-  const dots = brandColors.map(c => `<span style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block;margin-right:5px;"></span>`).join('')
+  const dots = brandColors.slice(0,6).map(c => `<span style="width:9px;height:9px;border-radius:50%;background:${c};display:inline-block;margin-right:4px;"></span>`).join('')
 
   return `<!DOCTYPE html>
 <html>
@@ -51,15 +53,16 @@ function buildCheatSheetHtml(bgUrl: string, title: string, rules: { num: number;
   body{width:1080px;height:1350px;overflow:hidden;font-family:'Helvetica Neue',Arial,sans-serif;}
   .wrap{width:1080px;height:1350px;position:relative;}
   .bg{position:absolute;inset:0;background:url('${bgUrl}') center/cover no-repeat;}
-  .overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.65) 0%,rgba(0,0,0,0.75) 100%);}
-  .content{position:relative;z-index:2;padding:48px 52px;height:100%;display:flex;flex-direction:column;}
-  .stamp{border:2px solid #e05c4b;border-radius:4px;padding:3px 12px;display:inline-block;transform:rotate(8deg);margin-bottom:20px;align-self:flex-end;}
-  .stamp span{color:#e05c4b;font-size:12px;font-weight:700;letter-spacing:0.15em;}
-  .title{font-size:36px;font-weight:800;color:#fff;line-height:1.15;margin-bottom:6px;letter-spacing:-0.01em;}
-  .subtitle{font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:0.1em;margin-bottom:32px;}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;}
-  .footer{margin-top:24px;display:flex;justify-content:space-between;align-items:center;}
-  .watermark{font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;}
+  .overlay{position:absolute;inset:0;background:linear-gradient(160deg,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.82) 60%,rgba(0,0,0,0.92) 100%);}
+  .content{position:relative;z-index:2;padding:50px 55px;height:100%;display:flex;flex-direction:column;}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;}
+  .stamp{border:2px solid #e05c4b;border-radius:4px;padding:4px 14px;transform:rotate(10deg);}
+  .stamp span{color:#e05c4b;font-size:11px;font-weight:700;letter-spacing:0.18em;}
+  .title{font-size:42px;font-weight:800;color:#fff;line-height:1.1;letter-spacing:-0.02em;max-width:700px;}
+  .subtitle{font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:0.12em;margin-top:8px;margin-bottom:36px;}
+  .rules{display:flex;flex-direction:column;gap:14px;}
+  .footer{margin-top:auto;padding-top:32px;display:flex;justify-content:space-between;align-items:center;}
+  .watermark{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.1em;}
 </style>
 </head>
 <body>
@@ -67,10 +70,14 @@ function buildCheatSheetHtml(bgUrl: string, title: string, rules: { num: number;
   <div class="bg"></div>
   <div class="overlay"></div>
   <div class="content">
-    <div class="stamp"><span>CONFIDENTIAL</span></div>
-    <div class="title">${title}</div>
-    <div class="subtitle">WHAT NO COLLEGE TEACHES YOU</div>
-    <div class="grid">${cards}</div>
+    <div class="top">
+      <div>
+        <div class="title">${title}</div>
+        <div class="subtitle">WHAT NO COLLEGE TEACHES YOU</div>
+      </div>
+      <div class="stamp"><span>CONFIDENTIAL</span></div>
+    </div>
+    <div class="rules">${cards}</div>
     <div class="footer">
       <div>${dots}</div>
       <div class="watermark">SAVE · SHARE · APPLY</div>
