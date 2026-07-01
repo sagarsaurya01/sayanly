@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const palette = allColors.slice(2)
   const colorList = allColors.join(', ')
 
-  const brandName = profile.company_name ?? 'Brand'
+  const brandName = profile.name ?? 'Brand'
 
   let systemPrompt = ''
   let userPrompt = ''
