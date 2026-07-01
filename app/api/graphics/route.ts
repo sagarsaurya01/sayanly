@@ -1,37 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import OpenAI from 'openai'
 import type { CompanyProfile, Topic, Post } from '@/lib/local-store'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
-
-const CAROUSEL_SLIDES = [
-  { label: 'Cover Slide', instruction: 'Bold cover slide with topic title as headline, strong visual hook, brand color background. Large text, minimal content.' },
-  { label: 'Slide 2', instruction: 'First key point or insight. Clean layout with one bold stat or statement, supporting visual element.' },
-  { label: 'Slide 3', instruction: 'Second key point. Different layout from slide 2 but same brand feel. Visual metaphor for the content.' },
-  { label: 'CTA Slide', instruction: 'Final call-to-action slide. Bold CTA text, brand colors, clean minimal layout. Encourage engagement.' },
-]
-
-async function generateWithOpenAI(prompt: string, n: number = 1): Promise<string[]> {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  const image = await openai.images.generate({
-    model: 'gpt-image-2',
-    prompt,
-    size: '1024x1536',
-    quality: 'high',
-    n,
-  })
-  return (image.data ?? []).map(d => d.url ?? `data:image/png;base64,${d.b64_json}`)
-}
-
-function safeParseJSON(text: string): Record<string, unknown> | null {
-  const stripped = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
-  try { return JSON.parse(stripped) } catch { /* ignore */ }
-  const match = stripped.match(/\{[\s\S]*\}/)
-  if (!match) return null
-  try { return JSON.parse(match[0]) } catch { return null }
-}
 
 export async function POST(req: NextRequest) {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -41,97 +13,150 @@ export async function POST(req: NextRequest) {
   const graphicType = topic.graphic_type ?? 'Static Graphic'
   const isCarousel = graphicType === 'Carousel'
   const hook = post?.linkedin?.hook ?? ''
+  const body_text = post?.linkedin?.body ?? ''
 
   const allColors = [
     profile.brand_colors.primary,
     profile.brand_colors.secondary,
     ...(profile.brand_colors.palette ?? []).filter(Boolean),
   ]
+  const primary = allColors[0] ?? '#1a1a2e'
+  const secondary = allColors[1] ?? '#e5c0d9'
+  const palette = allColors.slice(2)
   const colorList = allColors.join(', ')
 
-  // Step 1: Claude writes image prompts
-  const promptRequest = isCarousel
-    ? `You are a world-class social media art director specialising in LinkedIn content for premium brands. Generate FOUR highly detailed image generation prompts for a LinkedIn carousel series. Each prompt must be 4-6 sentences long and art-directed at the level of a magazine editorial shoot.
+  const brandName = profile.company_name ?? 'Brand'
 
-Topic: "${topic.title}"
-Brand colors (use as lighting, accents, rim light, or color grading — never flat fills): ${colorList}
-Industry context: ${profile.description}
+  let systemPrompt = ''
+  let userPrompt = ''
 
-Rules for every prompt:
-- Open with the HERO VISUAL: one powerful central metaphor or object that represents the slide's idea
-- Describe LIGHTING: cinematic rim lighting, soft volumetric glow, or studio-quality directional light using brand colors as colored gel sources
-- Describe COMPOSITION: camera angle, depth of field, foreground/background relationship
-- Describe MOOD AND TEXTURE: surface materials, atmosphere, emotional tone
-- NO generic stock photo scenes. NO office workers. NO laptops on desks.
-- Style: editorial magazine — clean, intelligent, slightly aspirational
-- End each prompt with: "Vertical portrait format 2:3, ultra-high detail, cinematic color grade, professional photography"
+  if (isCarousel) {
+    systemPrompt = `You are a world-class graphic designer. You create stunning LinkedIn carousel slides as SVG.
+Return ONLY valid SVG code — no markdown, no explanation, no \`\`\`svg fences. Just raw SVG starting with <svg.
+Rules:
+- Each slide: 1080x1080px viewBox
+- Dark, premium aesthetic — deep backgrounds, brand color accents
+- Large bold typography, generous whitespace
+- NO generic clip art. Clean editorial design.
+- Text must be readable at social media size`
 
-Slides:
-1. Cover: Bold hero visual that represents the full topic. Strong visual metaphor. Brand color as dominant light source.
-2. Slide 2: Visual metaphor for the FIRST key insight from this topic. Different object/scene from cover but same color language.
-3. Slide 3: Visual metaphor for the SECOND key insight. Contrasting composition from slide 2 — if slide 2 was close-up, slide 3 is wide, etc.
-4. CTA: Aspirational, forward-looking visual. Sense of achievement or transformation. Warm brand color tones.
-
-Return ONLY a JSON array with exactly 4 strings, no markdown:
-["cover prompt","slide 2 prompt","slide 3 prompt","cta prompt"]`
-    : `You are a world-class social media art director specialising in LinkedIn content for premium brands. Generate ONE highly detailed image generation prompt for a ${graphicType}. The prompt must be 5-7 sentences long, art-directed at the level of a magazine editorial or premium brand campaign.
+    userPrompt = `Create a 4-slide LinkedIn carousel for this topic.
 
 Topic: "${topic.title}"
 Hook: "${hook}"
-Brand colors (use as lighting, accents, rim light, or color grading — never flat fills): ${colorList}
-Industry context: ${profile.description}
-Graphic type: ${graphicType}
+Content: "${body_text.slice(0, 500)}"
+Brand: ${brandName}
+Brand colors: ${colorList}
+Industry: ${profile.description}
 
+Return 4 SVG slides separated by this exact delimiter on its own line:
+---SLIDE---
+
+Slide 1 - Cover: Bold title, strong visual metaphor using geometric shapes, primary brand color dominant
+Slide 2 - First insight: Key point with supporting visual element, clean layout
+Slide 3 - Second insight: Different layout from slide 2, contrasting composition
+Slide 4 - CTA: "Follow for more", brand name prominent, warm closing tone
+
+Each slide must be a complete standalone <svg viewBox="0 0 1080 1080"> element.`
+
+  } else if (graphicType === 'Cheat Sheet') {
+    systemPrompt = `You are a world-class graphic designer. You create stunning LinkedIn cheat sheets as SVG.
+Return ONLY valid SVG code — no markdown, no explanation. Just raw SVG starting with <svg.
 Rules:
-- Open with the HERO VISUAL: one powerful central metaphor, object, or scene that represents the topic
-- Describe a strong VISUAL METAPHOR — something unexpected and conceptual, not literal
-- Describe LIGHTING in detail: cinematic rim lighting, volumetric light rays, or studio-quality directional light using brand colors as gel sources or halos
-- Describe COMPOSITION: camera angle (top-down flat lay, 45-degree editorial, close-up macro, wide cinematic), depth of field, negative space
-- Describe SURFACE AND TEXTURE: background material (dark linen, slate, polished concrete, aged paper), foreground props, tactile detail
-- Describe MOOD: editorial intelligence, aspirational, slightly subversive, premium — never corporate clip art
-- Style reference: Monocle magazine meets premium brand campaign
-- End with: "Vertical portrait format 2:3, ultra-high detail, cinematic color grade, professional photography, no text"
+- 1080x1350px viewBox (portrait)
+- Dark premium background, brand color accents per section
+- Numbered sections, clear hierarchy
+- Bold section headers, readable body text
+- Structured grid layout`
 
-Return ONLY this JSON, no markdown:
-{"image_prompt":"...","structural_prompt":"5-8 bullet design brief describing the layout, typography, color usage, and mood"}`
+    userPrompt = `Create a premium LinkedIn cheat sheet graphic.
+
+Topic: "${topic.title}"
+Hook: "${hook}"
+Content to structure: "${body_text.slice(0, 800)}"
+Brand: ${brandName}
+Primary color: ${primary}
+Secondary color: ${secondary}
+Accent colors: ${palette.join(', ') || secondary}
+
+Design:
+- Title at top with CONFIDENTIAL-style stamp aesthetic
+- 6 numbered rule cards in a 2-column grid, each with its own brand accent color
+- Each card: number badge, bold rule title, 1-line description
+- Brand color dots footer
+- Deep dark background (#0f1117 or similar)
+- Return a complete <svg viewBox="0 0 1080 1350"> element`
+
+  } else {
+    systemPrompt = `You are a world-class graphic designer. You create stunning LinkedIn graphics as SVG.
+Return ONLY valid SVG code — no markdown, no explanation. Just raw SVG starting with <svg.
+Rules:
+- 1080x1080px viewBox
+- Dark premium aesthetic
+- Strong visual metaphor using geometric shapes, abstract forms
+- Brand colors as dominant palette
+- Bold typography, minimal text`
+
+    userPrompt = `Create a premium LinkedIn ${graphicType} graphic.
+
+Topic: "${topic.title}"
+Hook: "${hook}"
+Brand: ${brandName}
+Primary color: ${primary}
+Secondary color: ${secondary}
+All brand colors: ${colorList}
+Industry: ${profile.description}
+
+Design requirements:
+- Strong central visual metaphor (geometric, abstract, conceptual — NOT clip art)
+- Hook text as bold headline
+- Brand colors used for shapes, gradients, accent elements
+- Clean editorial layout with generous whitespace
+- Return a complete <svg viewBox="0 0 1080 1080"> element`
+  }
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 1000,
-    system: 'You are a social media art director. Return only valid JSON, no markdown.',
-    messages: [{ role: 'user', content: promptRequest }],
+    max_tokens: 4000,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
   })
 
   const content = message.content[0]
   if (content.type !== 'text') {
-    return NextResponse.json({ error: 'Failed to generate prompts' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to generate graphic' }, { status: 500 })
   }
 
-  const raw = content.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+  const raw = content.text.trim()
 
-  try {
-    if (isCarousel) {
-      const arrMatch = raw.match(/\[[\s\S]*\]/)
-      if (!arrMatch) return NextResponse.json({ error: 'Failed to parse carousel prompts' }, { status: 500 })
-      const slidePrompts = JSON.parse(arrMatch[0]) as string[]
-
-      const combinedPrompt = slidePrompts.join('\n\n---\n\n')
-      const slideUrls = await generateWithOpenAI(combinedPrompt, 4)
-      return NextResponse.json({
-        image_url: slideUrls[0],
-        slides: slideUrls,
-        prompt: combinedPrompt,
-        structural_prompt: '',
-      })
-    } else {
-      const parsed = safeParseJSON(raw)
-      if (!parsed) return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
-      const imagePrompt = parsed.image_prompt as string
-      const urls = await generateWithOpenAI(imagePrompt, 1)
-      return NextResponse.json({ image_url: urls[0], prompt: imagePrompt, structural_prompt: parsed.structural_prompt as string })
+  if (isCarousel) {
+    const parts = raw.split('---SLIDE---').map(s => s.trim()).filter(s => s.startsWith('<svg'))
+    if (parts.length === 0) {
+      return NextResponse.json({ error: 'Failed to generate carousel slides' }, { status: 500 })
     }
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Image generation failed'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    const svgToDataUrl = (svg: string) =>
+      `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+
+    const slides = parts.map(svgToDataUrl)
+    return NextResponse.json({
+      image_url: slides[0],
+      slides,
+      prompt: topic.title,
+      structural_prompt: '',
+      format: 'svg',
+    })
+  } else {
+    const svgMatch = raw.match(/<svg[\s\S]*<\/svg>/)
+    if (!svgMatch) {
+      return NextResponse.json({ error: 'Failed to generate graphic' }, { status: 500 })
+    }
+    const svg = svgMatch[0]
+    const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+    return NextResponse.json({
+      image_url: dataUrl,
+      prompt: topic.title,
+      structural_prompt: '',
+      format: 'svg',
+    })
   }
 }
