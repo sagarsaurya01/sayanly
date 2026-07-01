@@ -263,7 +263,10 @@ function GraphicsTab({ week, onGraphicsUpdate }: { week: Week; onGraphicsUpdate:
 
   async function generateGraphic(topic: Topic) {
     const post = week.posts.find((p) => p.topic_id === topic.id)
-    if (!post) return
+    if (!post) {
+      setErrors((prev) => ({ ...prev, [topic.id]: 'Generate the post content first before creating a graphic.' }))
+      return
+    }
 
     setErrors((prev) => { const next = { ...prev }; delete next[topic.id]; return next })
     setLoadingIds((prev) => new Set([...prev, topic.id]))
