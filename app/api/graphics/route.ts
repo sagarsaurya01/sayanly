@@ -128,10 +128,13 @@ Design requirements:
   }
 
   const raw = content.text.trim()
+  console.log('[graphics] raw response length:', raw.length)
+  console.log('[graphics] raw first 300 chars:', raw.slice(0, 300))
 
   if (isCarousel) {
     const parts = raw.split('---SLIDE---').map(s => s.trim()).filter(s => s.startsWith('<svg'))
     if (parts.length === 0) {
+      console.log('[graphics] carousel parse failed, raw:', raw.slice(0, 500))
       return NextResponse.json({ error: 'Failed to generate carousel slides' }, { status: 500 })
     }
     const svgToDataUrl = (svg: string) =>
@@ -148,7 +151,8 @@ Design requirements:
   } else {
     const svgMatch = raw.match(/<svg[\s\S]*<\/svg>/)
     if (!svgMatch) {
-      return NextResponse.json({ error: 'Failed to generate graphic' }, { status: 500 })
+      console.log('[graphics] static parse failed, raw:', raw.slice(0, 500))
+      return NextResponse.json({ error: `Failed to generate graphic. Claude returned: ${raw.slice(0, 200)}` }, { status: 500 })
     }
     const svg = svgMatch[0]
     const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
