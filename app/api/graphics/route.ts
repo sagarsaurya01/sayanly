@@ -1,23 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
+import puppeteer from 'puppeteer-core'
 import type { CompanyProfile, Topic, Post } from '@/lib/local-store'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
-async function generateImage(prompt: string): Promise<string> {
+async function generateImage(prompt: string, n: number = 1): Promise<string[]> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  const image = await openai.images.generate({
+  const result = await openai.images.generate({
     model: 'gpt-image-2',
     prompt,
     size: '1024x1536',
     quality: 'high',
-    n: 1,
+    n,
   })
-  const d = image.data?.[0]
-  if (!d) throw new Error('No image returned')
-  return d.url ?? `data:image/png;base64,${d.b64_json}`
+  return (result.data ?? []).map(d => d.url ?? `data:image/png;base64,${d.b64_json}`)
+}
+
+async function screenshotHtml(html: string): Promise<string> {
+  const browser = await puppeteer.launch({
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH ?? '/usr/bin/chromium-browser',
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    headless: true,
+  })
+  const page = await browser.newPage()
+  await page.setViewport({ width: 1080, height: 1350 })
+  await page.setContent(html, { waitUntil: 'networkidle0' })
+  const buffer = await page.screenshot({ type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1350 } })
+  await browser.close()
+  return `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`
+}
+
+function buildCheatSheetHtml(bgUrl: string, title: string, rules: { num: number; heading: string; desc: string; color: string }[], brandColors: string[]): string {
+  const cards = rules.map(r => `
+    <div style="background:rgba(0,0,0,0.55);border:1px solid ${r.color}44;border-radius:12px;padding:18px 20px;backdrop-filter:blur(6px);">
+      <div style="width:28px;height:28px;border-radius:50%;background:${r.color};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#000;margin-bottom:10px;">${r.num}</div>
+      <div style="font-size:15px;font-weight:700;color:${r.color};margin-bottom:6px;line-height:1.3;">${r.heading}</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.6;">${r.desc}</div>
+    </div>`).join('')
+
+  const dots = brandColors.map(c => `<span style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block;margin-right:5px;"></span>`).join('')
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{width:1080px;height:1350px;overflow:hidden;font-family:'Helvetica Neue',Arial,sans-serif;}
+  .wrap{width:1080px;height:1350px;position:relative;}
+  .bg{position:absolute;inset:0;background:url('${bgUrl}') center/cover no-repeat;}
+  .overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.65) 0%,rgba(0,0,0,0.75) 100%);}
+  .content{position:relative;z-index:2;padding:48px 52px;height:100%;display:flex;flex-direction:column;}
+  .stamp{border:2px solid #e05c4b;border-radius:4px;padding:3px 12px;display:inline-block;transform:rotate(8deg);margin-bottom:20px;align-self:flex-end;}
+  .stamp span{color:#e05c4b;font-size:12px;font-weight:700;letter-spacing:0.15em;}
+  .title{font-size:36px;font-weight:800;color:#fff;line-height:1.15;margin-bottom:6px;letter-spacing:-0.01em;}
+  .subtitle{font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:0.1em;margin-bottom:32px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;}
+  .footer{margin-top:24px;display:flex;justify-content:space-between;align-items:center;}
+  .watermark{font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bg"></div>
+  <div class="overlay"></div>
+  <div class="content">
+    <div class="stamp"><span>CONFIDENTIAL</span></div>
+    <div class="title">${title}</div>
+    <div class="subtitle">WHAT NO COLLEGE TEACHES YOU</div>
+    <div class="grid">${cards}</div>
+    <div class="footer">
+      <div>${dots}</div>
+      <div class="watermark">SAVE · SHARE · APPLY</div>
+    </div>
+  </div>
+</div>
+</body></html>`
 }
 
 export async function POST(req: NextRequest) {
@@ -27,7 +87,9 @@ export async function POST(req: NextRequest) {
 
   const graphicType = topic.graphic_type ?? 'Static Graphic'
   const isCarousel = graphicType === 'Carousel'
+  const isStructured = graphicType === 'Cheat Sheet' || graphicType === 'Infographic'
   const hook = post?.linkedin?.hook ?? ''
+  const bodyText = post?.linkedin?.body ?? ''
 
   const allColors = [
     profile.brand_colors.primary,
@@ -36,94 +98,107 @@ export async function POST(req: NextRequest) {
   ]
   const colorList = allColors.join(', ')
 
-  const promptRequest = isCarousel
-    ? `You are a world-class social media art director. Generate FOUR highly detailed image generation prompts for a LinkedIn carousel series. Each prompt must be 4-6 sentences long.
+  // ── STRUCTURED: Cheat Sheet / Infographic ────────────────────────────────
+  if (isStructured) {
+    const contentMsg = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2000,
+      system: 'You are a social media content designer. Return only valid JSON, no markdown.',
+      messages: [{
+        role: 'user',
+        content: `Extract or create exactly 6 rules/tips from this content for a LinkedIn ${graphicType}.
 
 Topic: "${topic.title}"
-Brand colors (use as rim lighting, color grading, or accent glow — never flat fills): ${colorList}
+Content: "${bodyText.slice(0, 800) || hook}"
+Brand colors available: ${colorList}
+
+Return ONLY this JSON:
+{
+  "title": "short punchy title (4-6 words max)",
+  "rules": [
+    {"num":1,"heading":"Rule title (4-6 words)","desc":"One sentence explanation. Max 15 words.","color":"${allColors[0]}"},
+    {"num":2,"heading":"Rule title","desc":"One sentence.","color":"${allColors[1] ?? allColors[0]}"},
+    {"num":3,"heading":"Rule title","desc":"One sentence.","color":"${allColors[2] ?? allColors[0]}"},
+    {"num":4,"heading":"Rule title","desc":"One sentence.","color":"${allColors[3] ?? allColors[1] ?? allColors[0]}"},
+    {"num":5,"heading":"Rule title","desc":"One sentence.","color":"${allColors[4] ?? allColors[0]}"},
+    {"num":6,"heading":"Rule title","desc":"One sentence.","color":"${allColors[5] ?? allColors[1] ?? allColors[0]}"}
+  ],
+  "bg_prompt": "Cinematic dark background image: [describe a moody atmospheric scene related to the topic — NO text, NO people, NO UI elements]. Deep shadows, brand colors ${colorList} as rim lighting. Ultra-high detail, no text."
+}`
+      }],
+    })
+
+    const contentRaw = contentMsg.content[0].type === 'text' ? contentMsg.content[0].text : ''
+    const contentMatch = contentRaw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim().match(/\{[\s\S]*\}/)
+    if (!contentMatch) return NextResponse.json({ error: 'Failed to parse content' }, { status: 500 })
+    const parsed = JSON.parse(contentMatch[0]) as { title: string; rules: { num: number; heading: string; desc: string; color: string }[]; bg_prompt: string }
+
+    const [bgUrl] = await generateImage(parsed.bg_prompt, 1)
+    const html = buildCheatSheetHtml(bgUrl, parsed.title, parsed.rules, allColors.slice(0, 6))
+    const image_url = await screenshotHtml(html)
+
+    return NextResponse.json({ image_url, prompt: parsed.bg_prompt, structural_prompt: '', slides: undefined })
+  }
+
+  // ── CAROUSEL ─────────────────────────────────────────────────────────────
+  if (isCarousel) {
+    const promptMsg = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2000,
+      system: 'You are a social media art director. Return only valid JSON array, no markdown.',
+      messages: [{
+        role: 'user',
+        content: `Generate FOUR detailed image prompts for a LinkedIn carousel.
+
+Topic: "${topic.title}"
+Brand colors (use as rim lighting/color grading): ${colorList}
 Industry: ${profile.description}
 
-Rules for every prompt:
-- Open with a powerful HERO VISUAL: one central metaphor or object representing the slide idea
-- Describe LIGHTING: cinematic rim lighting using brand colors as colored gel sources
-- Describe COMPOSITION: camera angle, depth of field, negative space
-- Describe MOOD AND TEXTURE: surface materials, atmosphere, emotional tone
-- NO office workers, NO laptops, NO generic stock scenes
-- Style: editorial magazine — premium, intelligent, aspirational
-- End each prompt with: "Vertical portrait 2:3 ratio, ultra-high detail, cinematic color grade, no text"
+Each prompt: 4-5 sentences. Hero visual → lighting → composition → mood. No text in images. No office workers.
+Style: editorial magazine, cinematic, premium.
+End each with: "Vertical portrait 2:3, ultra-high detail, cinematic color grade, no text"
 
-Slides:
-1. Cover: Bold hero visual for the full topic, brand color as dominant light source
-2. Slide 2: Visual metaphor for the first key insight, different scene from cover
-3. Slide 3: Visual metaphor for the second key insight, contrasting composition to slide 2
-4. CTA: Aspirational forward-looking visual, sense of achievement, warm brand tones
+Slides: Cover | First insight | Second insight | CTA/aspirational
 
-Return ONLY a JSON array with exactly 4 strings, no markdown:
-["prompt1","prompt2","prompt3","prompt4"]`
-    : `You are a world-class social media art director. Generate ONE highly detailed image generation prompt for a ${graphicType}. The prompt must be 5-7 sentences long.
+Return ONLY: ["prompt1","prompt2","prompt3","prompt4"]`
+      }],
+    })
+
+    const pRaw = promptMsg.content[0].type === 'text' ? promptMsg.content[0].text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim() : ''
+    const arrMatch = pRaw.match(/\[[\s\S]*\]/)
+    if (!arrMatch) return NextResponse.json({ error: 'Failed to parse carousel prompts' }, { status: 500 })
+    const slidePrompts = JSON.parse(arrMatch[0]) as string[]
+
+    const slideUrls = await generateImage(slidePrompts.join('\n\n'), 4)
+    return NextResponse.json({ image_url: slideUrls[0], slides: slideUrls, prompt: slidePrompts.join(' | '), structural_prompt: '' })
+  }
+
+  // ── STATIC GRAPHIC ────────────────────────────────────────────────────────
+  const promptMsg = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1000,
+    system: 'You are a social media art director. Return only valid JSON, no markdown.',
+    messages: [{
+      role: 'user',
+      content: `Generate ONE detailed image prompt for a LinkedIn static graphic.
 
 Topic: "${topic.title}"
 Hook: "${hook}"
-Brand colors (use as rim lighting, color grading, accent glow — never flat fills): ${colorList}
+Brand colors (rim lighting/color grading): ${colorList}
 Industry: ${profile.description}
 
-Rules:
-- Open with a powerful HERO VISUAL: one unexpected conceptual metaphor for the topic
-- Describe LIGHTING: cinematic rim lighting or volumetric glow using brand colors as gel sources
-- Describe COMPOSITION: camera angle (top-down flat lay, 45-degree editorial, close-up macro, wide cinematic), depth of field
-- Describe SURFACE AND TEXTURE: background material, foreground props, tactile detail
-- Describe MOOD: editorial intelligence, premium, slightly subversive — never corporate clip art
-- Style: Monocle magazine meets premium brand campaign
-- End with: "Vertical portrait 2:3 ratio, ultra-high detail, cinematic color grade, no text overlay"
+5-6 sentences: hero visual → unexpected metaphor → cinematic lighting using brand colors → composition → mood/texture.
+No text in image. No office workers. Style: Monocle magazine meets premium brand campaign.
+End with: "Vertical portrait 2:3, ultra-high detail, cinematic color grade, no text"
 
-Return ONLY this JSON, no markdown:
-{"image_prompt":"...","structural_prompt":"5-8 bullet design brief"}`
-
-  const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2000,
-    system: 'You are a social media art director. Return only valid JSON, no markdown.',
-    messages: [{ role: 'user', content: promptRequest }],
+Return ONLY: {"image_prompt":"...","structural_prompt":"5 bullet design brief"}`
+    }],
   })
 
-  const content = message.content[0]
-  if (content.type !== 'text') {
-    return NextResponse.json({ error: 'Failed to generate prompts' }, { status: 500 })
-  }
-
-  const raw = content.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
-
-  try {
-    if (isCarousel) {
-      const arrMatch = raw.match(/\[[\s\S]*\]/)
-      if (!arrMatch) return NextResponse.json({ error: 'Failed to parse carousel prompts' }, { status: 500 })
-      const slidePrompts = JSON.parse(arrMatch[0]) as string[]
-
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-      const combinedPrompt = slidePrompts.join('\n\n')
-      const result = await openai.images.generate({
-        model: 'gpt-image-2',
-        prompt: combinedPrompt,
-        size: '1024x1536',
-        quality: 'high',
-        n: 4,
-      })
-      const slideUrls = (result.data ?? []).map(d => d.url ?? `data:image/png;base64,${d.b64_json}`)
-      return NextResponse.json({
-        image_url: slideUrls[0],
-        slides: slideUrls,
-        prompt: combinedPrompt,
-        structural_prompt: '',
-      })
-    } else {
-      const match = raw.match(/\{[\s\S]*\}/)
-      if (!match) return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
-      const parsed = JSON.parse(match[0]) as { image_prompt: string; structural_prompt: string }
-      const image_url = await generateImage(parsed.image_prompt)
-      return NextResponse.json({ image_url, prompt: parsed.image_prompt, structural_prompt: parsed.structural_prompt })
-    }
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Image generation failed'
-    return NextResponse.json({ error: msg }, { status: 500 })
-  }
+  const sRaw = promptMsg.content[0].type === 'text' ? promptMsg.content[0].text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim() : ''
+  const sMatch = sRaw.match(/\{[\s\S]*\}/)
+  if (!sMatch) return NextResponse.json({ error: 'Failed to parse prompt' }, { status: 500 })
+  const { image_prompt, structural_prompt } = JSON.parse(sMatch[0]) as { image_prompt: string; structural_prompt: string }
+  const [image_url] = await generateImage(image_prompt, 1)
+  return NextResponse.json({ image_url, prompt: image_prompt, structural_prompt })
 }
