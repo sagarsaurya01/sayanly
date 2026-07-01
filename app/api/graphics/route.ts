@@ -13,18 +13,16 @@ const CAROUSEL_SLIDES = [
   { label: 'CTA Slide', instruction: 'Final call-to-action slide. Bold CTA text, brand colors, clean minimal layout. Encourage engagement.' },
 ]
 
-async function generateWithOpenAI(prompt: string): Promise<string> {
+async function generateWithOpenAI(prompt: string, n: number = 1): Promise<string[]> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const image = await openai.images.generate({
     model: 'gpt-image-2',
     prompt,
     size: '1024x1536',
     quality: 'high',
-    n: 1,
+    n,
   })
-  const imageData = image.data?.[0]
-  if (!imageData) throw new Error('No image data returned')
-  return imageData.url ?? `data:image/png;base64,${imageData.b64_json}`
+  return (image.data ?? []).map(d => d.url ?? `data:image/png;base64,${d.b64_json}`)
 }
 
 function safeParseJSON(text: string): Record<string, unknown> | null {
@@ -117,22 +115,20 @@ Return ONLY this JSON, no markdown:
       if (!arrMatch) return NextResponse.json({ error: 'Failed to parse carousel prompts' }, { status: 500 })
       const slidePrompts = JSON.parse(arrMatch[0]) as string[]
 
-      const slideUrls: string[] = []
-      for (const p of slidePrompts) {
-        slideUrls.push(await generateWithOpenAI(p))
-      }
+      const combinedPrompt = slidePrompts.join('\n\n---\n\n')
+      const slideUrls = await generateWithOpenAI(combinedPrompt, 4)
       return NextResponse.json({
         image_url: slideUrls[0],
         slides: slideUrls,
-        prompt: slidePrompts.join(' | '),
+        prompt: combinedPrompt,
         structural_prompt: '',
       })
     } else {
       const parsed = safeParseJSON(raw)
       if (!parsed) return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
       const imagePrompt = parsed.image_prompt as string
-      const image_url = await generateWithOpenAI(imagePrompt)
-      return NextResponse.json({ image_url, prompt: imagePrompt, structural_prompt: parsed.structural_prompt as string })
+      const urls = await generateWithOpenAI(imagePrompt, 1)
+      return NextResponse.json({ image_url: urls[0], prompt: imagePrompt, structural_prompt: parsed.structural_prompt as string })
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Image generation failed'
